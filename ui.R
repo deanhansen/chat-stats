@@ -97,10 +97,6 @@ page_navbar(
     style = "font-weight: 500; font-size: 1.5rem;",
     collapsible = TRUE
   ),
-  footer = div(
-    "© Dean Hansen",
-    style = "padding: 6px; background: #ffffffff; margin: 0 auto;"
-  ),
   nav_panel(
     "Dashboard",
     # Use fillable = TRUE to make the page content fill the available vertical space
@@ -273,6 +269,26 @@ page_navbar(
     "
     ))
   ),
+  tags$style(HTML("
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  .page-navbar {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .page-navbar .tab-content {
+    flex: 1;  /* expands to take up space */
+  }
+
+  .page-navbar .app-footer {
+    margin-top: auto; /* pushes footer to the bottom */
+  }
+")),
   tags$script(
     HTML(
       "
@@ -292,5 +308,10 @@ page_navbar(
       target = "_blank",
       bs_icon(name = "github", size = "1.5rem")
     )
+  ),
+  footer = div(
+    class = "app-footer",
+    style = "padding: 6px; text-align: center;",
+    "© Dean Hansen"
   )
 )

@@ -532,7 +532,7 @@ function(input, output, session) {
         color = NULL
       ) +
       theme(
-        text = element_text(family = "Inter"),
+        text = element_text(family = "sans"),
         axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
         axis.text.y = element_text(size = 13, hjust = 0.4, vjust = -0.4, margin = margin(t = 0, r = -60, b = 0, l = -60)),
         axis.line.x = element_line(linewidth = 0.5, colour = "black"),
@@ -625,7 +625,7 @@ function(input, output, session) {
     
     ## Set the plot y-axis limits
     max_y <- max(conversations_wday_plot_data$n)
-    limits_y <- c(0, ifelse(max_y / 25 == max_y, max_y + 25, ceiling(max_y / 25) * 25))
+    limits_y <- c(0, ifelse(max_y / 50 == max_y, max_y + 50, ceiling(max_y / 50) * 50))
 
     ## Create the conversations by weekday plot
     conversations_wday_plot <-
@@ -675,7 +675,7 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        text = element_text(family = "Inter"),
+        text = element_text(family = "sans"),
         axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
         axis.line.x = element_line(linewidth = 0.5, colour = "black"),
         axis.ticks = element_blank(),
@@ -754,7 +754,7 @@ function(input, output, session) {
         rstep = 0.05,
         use_richtext = TRUE,
         rm_outside = TRUE,
-        family = "Inter"
+        family = "sans-serif"
       ) +
       scale_size_area(max_size = 50) +
       scale_colour_manual(values = word_colours) +
