@@ -12,6 +12,7 @@ suppressMessages(
       library(DT)
       library(rlang)
       library(showtext)
+      library(sysfonts)
     })
   )
 )
@@ -23,7 +24,7 @@ my_theme <- bs_theme(
   info = "#282828ff",
   success = "#28A745",
   danger = "#DC3545", 
-  base_font = font_google("Inter")
+  base_font = "Inter"
 )
 
 ## File input button and box
@@ -36,7 +37,7 @@ file_input <-
     width = "400px"
   )
 
-## Static information boxes regarding ChatGPT usage worldwide
+## Info boxes at the top of the screen --------------------
 value_boxes <- list(
   value_box(
     title = "ChatGPT Release Date",
@@ -56,43 +57,32 @@ value_boxes <- list(
   )
 )
 
-## Cards containing user data
+## Cards --------------------------------------------------
 cards <- list(
-  card(
-    class = "bg-primary text-white no-border-card",
-    bs_icon("emoji-smile", size = "2rem"),
-    div("Total Chats Started with ChatGPT", class = "fw-bold"),
-    textOutput("total_chats")
-  ),
-  card(
-    class = "bg-primary text-white no-border-card",
-    bs_icon("chat-left-dots", size = "2rem"),
-    div("Total Messages Sent to ChatGPT", class = "fw-bold"),
-    textOutput("total_messages")
-  ),
-  card(
-    class = "bg-primary text-white no-border-card",
-    bs_icon("robot", size = "2rem"),
-    div("Total Messages Received from ChatGPT", class = "fw-bold"),
-    textOutput("total_tokens")
-  ),
-  # card(
-  #   class = "bg-primary text-white",
-  #   bs_icon("sun"),
-  #   div("% of Weekdays Talking to Chat", class = "fw-bold"),
-  #   textOutput("percentage_weekdays")
-  card(
-    class = "bg-primary text-white no-border-card",
-    bs_icon("sun-fill"),
-    div("What You Ask Chat About", class = "fw-bold"),
-    textOutput("user_favourite_word")
+    card(
+      class = "bg-primary text-white no-border-card",
+      bs_icon("emoji-smile", size = "2rem"),
+      div("Total Chats Started with ChatGPT", class = "fw-bold"),
+      textOutput("total_chats")
+    ),
+    card(
+      class = "bg-primary text-white no-border-card",
+      bs_icon("chat-left-dots", size = "2rem"),
+      div("Total Messages Sent to ChatGPT", class = "fw-bold"),
+      textOutput("total_messages")
+    ),
+    card(
+      class = "bg-primary text-white no-border-card",
+      bs_icon("robot", size = "2rem"),
+      div("Total Messages Received from ChatGPT", class = "fw-bold"),
+      textOutput("total_tokens")
+    ),
+    card(
+      class = "bg-primary text-white no-border-card",
+      bs_icon("sun-fill"),
+      div("What You Ask Chat About", class = "fw-bold"),
+      textOutput("user_favourite_word")
   )
-  # card(
-  #   class = "bg-primary text-white",
-  #   bs_icon("sun"),
-  #   div("What Chat Talks to You About", class = "fw-bold"),
-  #   textOutput("assistant_favourite_word")
-  # )
 )
 
 ## Define the app
@@ -113,8 +103,10 @@ page_navbar(
   ),
   nav_panel(
     "Dashboard",
-    fillable = FALSE,
-    style = "display: flex; flex-direction: column; overflow-y: auto;",
+    # Use fillable = TRUE to make the page content fill the available vertical space
+    fillable = TRUE,
+    # Remove the fixed styles to allow for responsive layout
+    # style = "display: flex; flex-direction: column; overflow-y: auto;",
 
     ## File input
     conditionalPanel(
@@ -129,68 +121,52 @@ page_navbar(
     ## Charts and value boxes when data is ready
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
-
-      ## ...
-      # layout_column_wrap(
-      #   width = 1,
-      #   card(
-      #     class = "border-color: none",
-      #     div(
-      #       class = "alert alert-info",
-      #       "
-      #       You may wonder how ChatGPT generates text.
-      #       If you've taken a course in linear algebra, you're almost there.
-      #       Inside a generative pre-trained transformer (GPT) model, there are billions of numbers which are learned during model training.
-      #       These numbers are arranged in matrices, which are then multiplied together in a particular way with the goal at the end of generating a list of decisions.
-      #       Why I say decisions is because GPT models do not always select the most probable token, but provide a ranking of sorts that can then be used to sample from.
-      #       I should clarify, a token is not a word, but kind of like an atom.
-      #       You can use tokens to build up words.
-      #       For example, if you want to spell 'are' you will need the tokens 'a' and 're'.
-      #       Tokens are generally different between LLM's, because tokens are really vectors that are learned from data.
-      #       So, when you type into ChatGPT using a keyboard, your text is parsed into tokens (that all have unique ID's like [2, 5002, 14, 24]) then converted into a matrix of tokens.
-      #       Training these models requires lots of plain text data, and an ability to take a piece of a word and convert it into a vector. Once we have a numerical representation of the each token, we can train a model to output a new token (i.e. vector) given the preceeding tokens. There are many tricks employed to get LLM's feeling more human, but at a basic level, they are converting your input text into numbers and back."
-      #       )
-      #     )
-      # ),
-
-      ## Value boxes side by side
+      
+      # Use layout_column_wrap for the top value boxes
       layout_column_wrap(
-        width = 2,
+        width = "400px", # Set a reasonable width for each value box
+        height = "300px",
         gap = "12px",
+        # Use an outer card to group these two items
         !!!value_boxes
       ),
 
-      ## Cards side by side
-      layout_columns(
-        width = 3,
+      # Use layout_column_wrap for the info cards
+      layout_column_wrap(
+        width = "200px",
+        height = "160px",
         gap = "12px",
+        class = "pt-2",
         !!!cards
       ),
 
-      ## Word plot
+      # Use layout_column_wrap for the word plot
       layout_column_wrap(
-        width = 1,
+        width = "100%",
+        height = "500px",
         card(
           card_header(
             "Now, Tell Me What's On Your Mind",
-          tooltip(
-              bs_icon("info-circle-fill"),
+            tooltip(
+              bs_icon("info-circle"),
               "This plot shows the top 25 words that appeaer in your conversation names. Since these are auto-generated based on your first prompt, they are a good indication of what you're asking ChatGPT about."
             )
           ),
-          plotOutput("wordPlot", height = "420px")
+          imageOutput("wordPlot")
         )
       ),
 
-      ## Two girafe plots side by side
+      # Use layout_column_wrap for the two girafe plots
       layout_column_wrap(
-        width = 2,
+        width = "440px", # Define the minimum width of each card
+        height = "880px",
+        gap = "12px",
         card(
           card_header(
             "You Say Goodbye, And I Say Hello",
             tooltip(
-              bs_icon("info-circle-fill"),
-              "This plot shows the total conversations started on each day of the week."
+              bs_icon("info-circle"),
+              "This plot shows the total separate conversations started on each day of the week. Check out which weekdays you use ChatGPT the most on!"
             )
           ),
           girafeOutput("wdayPlot", width = "100%"),
@@ -199,9 +175,12 @@ page_navbar(
         card(
           card_header(
             "Chatty, Aren't Chya",
-          tooltip(
-              bs_icon("info-circle-fill"),
-              "This plot shows the number of tokens generated per response by ChatGPT and you. If you have a lot of data, you'll notice ChatGPT is quite chatty compared to you!"
+            tooltip(
+              bs_icon("info-circle"),
+              HTML(
+                "This plot looks a bit complicated but it compares how long your messages are compared to ChatGPT's. <br><br>",
+                "You'll likely see your curve climbs to the top quickly, meaning you send very short messages to ChatGPT. Comparitively, ChatGPT will have a much slower climb to the top, indicating that it is very chatty, even when you're not!"
+              )
             )
           ),
           girafeOutput("distPlot", width = "100%"),
@@ -212,7 +191,8 @@ page_navbar(
   ),
   nav_panel(
     title = "Raw Data",
-    fillable = FALSE,
+    # Set to TRUE to allow the table to fill the available space
+    fillable = TRUE,
     style = "padding: auto; margin: auto;",
     conditionalPanel(
       condition = "input.selected_tab === 'Raw Data' && output.dataReady == true",
@@ -266,15 +246,21 @@ page_navbar(
           color: #fff;
         }
 
+      img {
+        display:block; 
+        margin-left:auto;
+        margin-right:auto;
+      }
+
       .no-border-card {
         border: none !important;
         box-shadow: none !important; /* optional if you also want to remove shadow */
       }
-
+      
+      /* Make sure the navbar doesn't stretch outside the viewport */
       .navbar {
-        width: 99%;
-        margin: 0 auto;
-        margin-top: 1rem;
+        width: 100%;
+        max-width: 100%;
       }
 
       .shiny-file-input-progress {

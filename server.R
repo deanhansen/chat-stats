@@ -23,10 +23,8 @@ suppressMessages(
       library(ggwordcloud)
       library(ggridges)
       library(showtext)
-
-      ## Add Neucha from Google Fonts
-      font_add_google("Neucha", "neucha")
-      showtext_auto()
+      library(ggtext)
+      library(ggimage)
 
       ## Text cleanup
       library(tidytext)
@@ -36,10 +34,6 @@ suppressMessages(
 
       ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
       library(reticulate)
-
-      ## Set plotting variables
-      plot_width <- "100%"
-      plot_height <- "420px"
 
       ## Load Python module
       tiktoken <- import("tiktoken")
@@ -74,14 +68,32 @@ generate_survey_options <- function(true_val, n = 50, choose = 3) {
 ## Server function ----------------------------------------------------
 
 function(input, output, session) {
-  ## ...
-  # hide(selector = ".nav-link")
-
   ## Set of reactive values that we'll update as the user interacts with the app
   conversations <- reactiveVal()
   survey_status <- reactiveVal(value = FALSE)
 
-  ## Wait for the user to upload their conversations.json file downloaded from ChatGPT website
+  # A reactive value to track which questions have been answered
+  answered_questions <- reactiveVal(character(0))
+
+  # Observe all survey inputs to see which questions have been answered
+  observe({
+    questions <- survey_questions()
+    
+    # Check if questions() is ready before setting up observers
+    if (!is.null(questions)) {
+      lapply(names(questions), function(q_id) {
+        observeEvent(input[[q_id]], {
+          current_list <- answered_questions()
+          if (!(q_id %in% current_list)) {
+            answered_questions(c(current_list, q_id))
+          }
+        }, ignoreInit = TRUE)
+      })
+    }
+  })
+
+
+  ## Wait for the user to upload their conversations.json file downloaded from ChatGPT website --------
   observeEvent(input$conversation_history, {
     ## Require that the `conversation_history` input exists
     req(input$conversation_history)
@@ -106,12 +118,15 @@ function(input, output, session) {
       mutate(id = row_number()) |>
       mutate(chat_id = cur_group_id(), .by = title) |>
       mutate(
+        ## Set the author id's
+        author_id = if_else(author == "user", 1L, 2L),
         ## Get the token counts per message sent to and from the assistant
         text = str_replace_all(
           string = text,
           pattern = "<\\|endoftext\\|>",
           replacement = "endoftext"
         ),
+        ## Get the number of tokens (integer)
         tokens = enc$encode_batch(text) |> map_int(length),
         ## Add additional metadata for time based analysis
         create_date = as_date(create_time),
@@ -135,6 +150,7 @@ function(input, output, session) {
         "id",
         "chat_id",
         "title",
+        "author_id",
         "author",
         "chat_seq",
         "text",
@@ -152,14 +168,16 @@ function(input, output, session) {
 
   ## Remove the progress bar once the file is loaded
   observeEvent(input$conversation_history, {
+    ## Check `conversation_history` exists
     req(input$conversation_history)
+
+    ## This tells the UI to remove the file upload element once we've loaded the data
     session$sendCustomMessage("removeProgressBar", "conversation_history")
   })
 
-  ## Survey once the user uploads their file and it was successfully parsed
+  ## Create the survey questions once the data has been successfully parsed ----------------------------
   survey_questions <- reactive({
-
-    ## Require that `conversations` exists
+    ## Check `conversations` exists
     req(conversations())
 
     ## Datapoints required for the survey questions and answers
@@ -176,94 +194,92 @@ function(input, output, session) {
     q2_options <- generate_survey_options(n_days)
     q3_options <- generate_survey_options(n_messages_user)
 
-    ## ...
+    ## List of questions, options and correct answer's
     list(
+      ## Based on user data
       q1 = list(
-      prompt = "How many conversations have you started with ChatGPT?",
-      options = list(
-        "opt_1" = q1_options[1],
-        "opt_2" = q1_options[2],
-        "opt_3" = q1_options[3],
-        "opt_4" = q1_options[4]
+        prompt = "How many separate conversations have you had with ChatGPT?",
+        options = list(
+          "opt_1" = q1_options[1],
+          "opt_2" = q1_options[2],
+          "opt_3" = q1_options[3],
+          "opt_4" = q1_options[4]
+        ),
+        correct_answer = format(n_chats, big.mark = ",")
       ),
-      correct_answer = format(n_chats, big.mark = ",")
-    ),
 
-    ## ...
-    q2 = list(
-      prompt = "How many days have you used ChatGPT?",
-      options = list(
-        "opt_1" = q2_options[1],
-        "opt_2" = q2_options[2],
-        "opt_3" = q2_options[3],
-        "opt_4" = q2_options[4]
+      ## Based on user data
+      q2 = list(
+        prompt = "On how many different days have you used ChatGPT?",
+        options = list(
+          "opt_1" = q2_options[1],
+          "opt_2" = q2_options[2],
+          "opt_3" = q2_options[3],
+          "opt_4" = q2_options[4]
+        ),
+        correct_answer = format(n_days, big.mark = ",")
       ),
-      correct_answer = format(n_days, big.mark = ",")
-    ),
 
-    ## ...
-    q3 = list(
-      prompt = "How many messages have you sent to ChatGPT in 2025?",
-      options = list(
-        "opt_1" = q3_options[1],
-        "opt_2" = q3_options[2],
-        "opt_3" = q3_options[3],
-        "opt_4" = q3_options[4]
+      ## Based on user data
+      q3 = list(
+        prompt = "How many messages have you sent to ChatGPT so far in 2025?",
+        options = list(
+          "opt_1" = q3_options[1],
+          "opt_2" = q3_options[2],
+          "opt_3" = q3_options[3],
+          "opt_4" = q3_options[4]
+        ),
+        correct_answer = format(n_messages_user, big.mark = ",")
       ),
-      correct_answer = format(n_messages_user, big.mark = ",")
-    ),
 
-    ## ...
-    q4 = list(
-      prompt = "What year was ChatGPT released to the public?",
-      options = list(
-        "opt_1" = 2020L,
-        "opt_2" = 2021L,
-        "opt_3" = 2022L,
-        "opt_4" = 2023L
+      ## 2022
+      q4 = list(
+        prompt = "What year was ChatGPT released to the public?",
+        options = list(
+          "opt_1" = "2020",
+          "opt_2" = "2021",
+          "opt_3" = "2022",
+          "opt_4" = "2023"
+        ),
+        correct_answer = "2022"
       ),
-      correct_answer = 2022L
-    ),
 
-    ## ...
-    q5 = list(
-      prompt = "What does GPT stand for?",
-      options = list(
-        "opt_1" = "general pre-trained transformer",
-        "opt_2" = "generative personal talker",
-        "opt_3" = "generative pre-trained transformer",
-        "opt_4" = "gets people talking"
+      ## Generative Pre-Trained Transformer
+      q5 = list(
+        prompt = "What does GPT stand for?",
+        options = list(
+          "opt_1" = "general pre-trained transformer",
+          "opt_2" = "generative personal talker",
+          "opt_3" = "generative pre-trained transformer",
+          "opt_4" = "gets people talking"
+        ),
+        correct_answer = "generative pre-trained transformer"
       ),
-      correct_answer = 2022L
-    ),
 
-    ## ...
-    q6 = list(
-      prompt = "What famous 2012 paper kick started the modern deep learning revolution?",
-      options = list(
-        "opt_1" = "ImageNet Classification with Deep Convolutional Neural Networks",
-        "opt_2" = "Attention is All You Need",
-        "opt_3" = "Natural Language Processing (Almost) from Scratch",
-        "opt_4" = "Playing Atari with Deep Reinforcement Learning"
-      ),
-      correct_answer = "ImageNet Classification with Deep Convolutional Neural Networks"
+      ## AlexNet paper
+      q6 = list(
+        prompt = "Which of these famous papers started the current deep learning revolution?",
+        options = list(
+          "opt_1" = "attention is all you need",
+          "opt_2" = "imagenet classification with deep cnn's",
+          "opt_3" = "be terrified, be scared, the robots are coming for us",
+          "opt_4" = "playing atari with deep reinforcement learning"
+        ),
+        correct_answer = "imagenet classification with deep cnn's"
+      )
     )
-  )
-
   })
 
-  
-  # Create the survey UI ---------------------------------------------
+  ## Create the survey UI ---------------------------------------------
 
   output$survey_ui <- renderUI({
-    
     ## Verify again that `conversations` exists
     req(conversations())
 
     ## Set a reactive value
     questions <- survey_questions()
 
-    ## ...
+    ## Create the sequence of questions on the UI
     tagList(
       lapply(names(questions), function(q_id) {
         question <- questions[[q_id]]
@@ -293,29 +309,36 @@ function(input, output, session) {
     )
   })
 
-  # Handler for the survey submission ---------------------------------------------
+  ## Handler for the survey submission ---------------------------------------------
 
   ## Survey Submission Logic
   observeEvent(input$submit_survey, {
-
+    
     ## Verify `conversations` exists
     req(conversations())
-
-    ## ...
+    
+    ## Get the total number of questions
     questions <- survey_questions()
-    correct_answers <- 0
     total_questions <- length(questions)
 
-    ## Create the results UI
-    results_ui <- tagList(
-      hr(),
-      actionButton("continue_btn", "Continue")
-    )
+    ## Get the number of answered questions from the reactive value
+    num_answered <- length(answered_questions())
+
+    ## Check if all questions have been answered
+    if (num_answered < total_questions) {
+      showNotification(
+        "Please answer all questions before submitting.",
+        type = "warning",
+        duration = 5
+      )
+      return() # Exit the function early
+    }
+
+    correct_answers <- 0
 
     ## Check answers and create a new UI with colors
     new_survey_ui <- tagList()
     for (q_id in names(questions)) {
-
       ## Save the question
       question <- questions[[q_id]]
 
@@ -325,8 +348,8 @@ function(input, output, session) {
       ## Save the correct answer for the question
       correct_answer <- question$correct_answer
 
-      ## Check if the answer is correct (handle if nothing selected)
-      is_correct <- ifelse(is.na(user_answer) || is.null(user_answer), FALSE, user_answer == correct_answer)
+      ## Check if the answer is correct
+      is_correct <- user_answer == correct_answer
 
       if (is_correct) {
         correct_answers <- correct_answers + 1
@@ -362,7 +385,7 @@ function(input, output, session) {
       )
     }
 
-    # Update the modal with the results and continue button
+    ## Update the modal with the results and continue button
     showModal(
       modalDialog(
         title = NULL,
@@ -410,13 +433,13 @@ function(input, output, session) {
         uiOutput("survey_ui"),
         footer = NULL,
         size = "xl",
-        easyClose = TRUE,
+        easyClose = FALSE,
         disabled = "disabled"
       )
     )
   })
 
-  # Total messages sent by user ---------------------------------------------
+  ## Total messages sent by user ---------------------------------------------
 
   output$total_messages <- renderText({
     req(conversations())
@@ -426,7 +449,7 @@ function(input, output, session) {
       format(big.mark = ",")
   })
 
-  # Total messages sent by assistant ---------------------------------------------
+  ## Total messages sent by assistant ---------------------------------------------
 
   output$total_tokens <- renderText({
     req(conversations())
@@ -436,177 +459,111 @@ function(input, output, session) {
       format(big.mark = ",")
   })
 
-  # Total conversations started ---------------------------------------------
+  ## Total conversations started ---------------------------------------------
 
   output$total_chats <- renderText({
     req(conversations())
     format(n_distinct(conversations()$title), big.mark = ",")
   })
 
-  # Total days talking to assistant ---------------------------------------------
+  ## Total days talking to assistant ---------------------------------------------
 
   output$total_days <- renderText({
     req(conversations())
     format(n_distinct(conversations()$create_date), big.mark = ",")
   })
 
-  # Total weekdays where at least one conversation was started with assistant (since release in November 30th, 2022) --------------
-
-  # output$percentage_weekdays <- renderText({
-  #   req(conversations())
-  #
-  #   ## Create a simple date table for later
-  #   start_date <- ymd("2022-11-30")
-  #   end_date   <- max(conversations()$create_date)
-  #   all_dates  <- seq(start_date, end_date, by = "day")
-  #
-  #   ## Get the number of weekdays since Chat release
-  #   weekdays_since_chat_release <-
-  #     all_dates |>
-  #     wday(week_start = 1) |>
-  #     `%in%`(1:5) |>
-  #     sum()
-  #
-  #   ## Return the formatted percentage
-  #   paste0(round(n_distinct(conversations()$create_date) / weekdays_since_chat_release * 100, 1), "%")
-  #
-  # })
-
-  # Top three things you ask chat ---------------------------------------------
-
-  # output$user_favourite_word <- renderText({
-  #   req(conversations())
-
-  #   conversations() |>
-  #     filter(author == "user") |>
-  #     select("text") |>
-  #     unnest_ngrams(input = text, output = word, n = 3) |>
-  #     count(word) |>
-  #     slice_max(n = 3, with_ties = FALSE, order_by = n) |>
-  #     pull("word") |>
-  #     paste0(collapse = ", ")
-  # })
-
-  # Favourite day of the week to talk to chat ---------------------------------------------
-
-
-  # Top three things chat tells you ---------------------------------------------
-
-  # output$assistant_favourite_word <- renderText({
-  #   req(conversations())
-  #
-  #   conversations() |>
-  #     filter(author == "assistant") |>
-  #     select("text") |>
-  #     unnest_ngrams(input = text, output = word, n = 3) |>
-  #     count(word) |>
-  #     slice_max(n = 3, with_ties = FALSE, order_by = n) |>
-  #     pull("word") |>
-  #     paste0(collapse = ", ")
-  #
-  # })
-
-  # Token output plot --------------------------------------------------------------
+  ## Token distribution plot --------------------------------------------------------------
 
   output$distPlot <- renderGirafe({
-    ## ...
+    ## Check `conversations` exists
     req(conversations())
 
-    ## ...
-    # conversations_ <-
-    #   conversations() |>
-    #   group_by(chat_id, author) |>
-    #   reframe(avg_tokens_per_conversation = mean(tokens, na.rm = TRUE)) |>
-    #   pivot_wider(
-    #     names_from = author,
-    #     values_from = avg_tokens_per_conversation
-    #   ) |>
-    #   drop_na(user, assisstant)
-
-    ## ...
-    conversations_agg <-
+    ## Create the dataset required for making token distribution plot
+    token_distribution_plot_data <-
       conversations() |>
-      group_by(chat_id, author) |>
-      reframe(avg_tokens = mean(tokens, na.rm = TRUE))
-    # pivot_wider(
-    #   names_from = author,
-    #   values_from = avg_tokens
-    # )|>
-    # drop_na(user, assisstant)
-
-    ## ...
-    plot_1 <-
-      conversations_agg |>
-      ggplot(
-        aes(
-          x = author,
-          y = avg_tokens,
-          data_id = chat_id
-        )
-      ) +
-      geom_point_interactive(colour = "black", size = 1.75, alpha = 0.4) +
-      # geom_vline(
-      #   xintercept = conversations_agg$user,
-      #   linetype = 2,
-      #   linewidth = 0.1
-      # ) +
-      # geom_hline(
-      #   yintercept = conversations_agg$assistant,
-      #   linetype = 2,
-      #   linewidth = 0.1
-      # ) +
-      # geom_point(data = conversations_agg,   aes(x = user, y = assistant), size = 26 / .pt, colour = "black", inherit.aes = FALSE) +
-      # geom_point(data = conversations_agg,   aes(x = user, y = assistant), size = 22 / .pt, colour = "yellow2", inherit.aes = FALSE) +
-      # geom_point(data = conversations_agg,   aes(x = user, y = assistant), size = 14 / .pt, colour = "black", inherit.aes = FALSE) +
-      # geom_point(data = conversations_agg,   aes(x = user, y = assistant), size = 10 / .pt, colour = "red3",    inherit.aes = FALSE) +
-      # geom_segment(
-      #   data = conversations_agg,
-      #   aes(x = user - 15 / .pt, xend = user + 15 / .pt, y = assistant),
-      #   inherit.aes = FALSE
-      # ) +
-      # geom_segment(
-      #   data = conversations_agg,
-      #   aes(x = user, y = assistant - 124 / .pt, yend = assistant + 124 / .pt),
-      #   inherit.aes = FALSE
-      # ) +
-      # geom_segment(data = conversations_agg, aes(x = user, y = assistant - 6 / .pt, yend = assistant + 6 / .pt), inherit.aes = FALSE) +
-      # scale_x_log10(
-      #   labels = label_log(digits = 1),
-      #   minor_breaks = NULL
-      # ) +
-      scale_y_continuous(
-        labels = label_comma(suffix = " tokens"),
-        minor_breaks = NULL,
-        position = "right"
-      ) +
-      labs(
-        # title = "Chatty, Aren't We",
-        # subtitle = "Tokens sent by ChatGPT and user, all conversations*",
-        # caption = "Source: OpenAI Data",
-        caption = NULL,
-        x = NULL,
-        y = NULL,
-        colour = NULL
-      ) +
-      theme(
-        plot.title = element_text(size = 15, face = "bold"),
-        plot.subtitle = element_text(size = 11),
-        axis.text.x = element_text(size = 9, vjust = 0.02, margin = margin(t = 5, r = 0, b = 0, l = 0)),
-        axis.ticks.length.x = unit(x = 0, units = "cm"),
-        axis.minor.ticks.length.x = unit(x = 0.05, units = "cm"),
-        axis.ticks.y.right = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_line(linetype = 1, linewidth = 0.10, colour = "grey65"),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_rect(fill = "#EEE")
+      group_by(chat_id, author_id, author) |>
+      reframe(
+        avg_tokens_per_conversation_by_author = mean(tokens, na.rm = TRUE)
+      ) |>
+      mutate(author = if_else(author_id == 1L, "You", "ChatGPT")) |>
+      select(
+        "chat_id",
+        "author_id",
+        "author",
+        "avg_tokens_per_conversation_by_author"
       )
 
-    ## ...
+    ## Set the plot y-axis limits
+    max_x <- max(token_distribution_plot_data$avg_tokens_per_conversation_by_author)
+    limits_x <- c(0, max_x)
+
+    ## Cumulative distribution comparison
+    token_distribution_plot <-
+      token_distribution_plot_data |>
+      ggplot(
+        aes(x = avg_tokens_per_conversation_by_author, colour = author)
+      ) +
+      geom_step_interactive(
+        aes(y = after_stat(y), group = author),
+        stat = "ecdf",
+        size = 1.5
+      ) +
+      scale_x_continuous(
+        labels = label_comma(big.mark = ","),
+        limits = limits_x,
+        expand = c(0.05, 0)
+      ) +
+      scale_y_continuous(
+        position = "right",
+        labels = label_percent(),
+        breaks = seq(0, 1, by = 0.25),
+        limits = c(0, 1),
+        expand = c(0, 0)
+      ) +
+      scale_colour_manual(
+        values = c("ChatGPT" = "#10A37F", "You" = "#000000ff")
+      ) +
+      labs(
+        title = NULL,
+        subtitle = NULL,
+        x = NULL,
+        y = NULL,
+        color = NULL
+      ) +
+      theme(
+        text = element_text(family = "Inter"),
+        axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
+        axis.text.y = element_text(size = 13, hjust = 0.4, vjust = -0.4, margin = margin(t = 0, r = -60, b = 0, l = -60)),
+        axis.line.x = element_line(linewidth = 0.5, colour = "black"),
+        panel.grid.major.x = element_line(linewidth = 0.5, colour = "black"),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_line(linewidth = 0.5, colour = "black"),
+        panel.grid.minor.y = element_blank(),
+        plot.background = element_blank(),
+        panel.background = element_rect(fill = "#ffffffff"),
+        legend.position = "top",
+        legend.key.size = unit(x = 6, units = "pt"),
+        legend.text = element_text(size = 13, face = "bold", margin = margin(t = 0, r = 5, b = 0, l = 5))
+      )
+
+    ## Generate output given to the render function
     girafe(
-      ggobj = plot_1,
+      ggobj = token_distribution_plot,
+      width_svg = 9,
+      height_svg = 6,
       options = list(
-        opts_toolbar(saveaspng = TRUE, pngname = "tokens_distribution.png", hidden = c("lasso_select", "lasso_deselect", "zoom_onoff", "zoom_rect", "zoom_reset")),
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "tokens_ecdf_distribution.png",
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
         opts_tooltip(
           opacity = 0.80,
           offx = -20,
@@ -618,13 +575,14 @@ function(input, output, session) {
     )
   })
 
-  ## Weekday column plot
+  ## Weekday column plot ----------------------------------------------------------------------------------------
+
   output$wdayPlot <- renderGirafe({
-    ## ...
+    ## Check `conversations` exists
     req(conversations())
 
-    ## ...
-    day_names <- c(
+    ## Set the x-axis labels
+    x_axis_labels <- c(
       "Mon",
       "Tues",
       "Wed",
@@ -635,35 +593,43 @@ function(input, output, session) {
     )
 
     ## Get the ranks based on the highest average at the end
-    conversations_wday <-
+    conversations_wday_plot_data <-  
       conversations() |>
-      reframe(n = n_distinct(chat_id), .by = create_time_wday) |>
+      group_by(create_time_wday) |>
+      reframe(n = n_distinct(chat_id)) |>
       mutate(
-        create_time_wday_label = factor(
-          x = create_time_wday,
-          labels = day_names
-        ),
+        create_time_wday_label = factor(x = create_time_wday, labels = x_axis_labels),
         fill = if_else(create_time_wday < 6, "grey10", "grey80"),
-        colour = if_else(create_time_wday < 6, "white", "black")
+        colour = if_else(create_time_wday < 6, "white", "black"),
+        rank = rank(-n)
       ) |>
+      group_by(rank) |> 
+      mutate(
+        rank = cur_group_id(),
+        emoji_url = case_when(
+          rank == 1L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f947.svg",
+          rank == 2L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f948.svg",
+          rank == 3L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f949.svg",
+          .default = NA
+        )
+      ) |> 
+      ungroup() |> 
       select(
         "create_time_wday",
         "create_time_wday_label",
         "n",
         "fill",
-        "colour"
+        "colour",
+        "emoji_url"
       )
+    
+    ## Set the plot y-axis limits
+    max_y <- max(conversations_wday_plot_data$n)
+    limits_y <- c(0, ifelse(max_y / 25 == max_y, max_y + 25, ceiling(max_y / 25) * 25))
 
-    ## Plot limits
-    max_y <- max(conversations_wday$n)
-    limits_y <- c(
-      0,
-      ifelse(max_y / 25 == max_y, max_y + 25, ceiling(max_y / 25) * 25)
-    )
-
-    ## ...
-    plot_2 <-
-      conversations_wday |>
+    ## Create the conversations by weekday plot
+    conversations_wday_plot <-
+      conversations_wday_plot_data |>
       ggplot(
         aes(
           x = create_time_wday_label,
@@ -675,16 +641,22 @@ function(input, output, session) {
       ) +
       geom_col_interactive(
         colour = "transparent",
-        width = 0.55,
+        width = 0.45,
         show.legend = FALSE
       ) +
       geom_text_interactive(
         aes(label = n),
-        family = "sans-serif",
         vjust = 1.75,
-        size = 15 / .pt
+        size = 13 / .pt
       ) +
-      scale_x_discrete(expand = expansion(0.05)) +
+      geom_image(
+        aes(x = create_time_wday_label, image = emoji_url, y = n + 5),
+        size = 0.07,
+        inherit.aes = FALSE
+      ) +
+      scale_x_discrete(
+        expand = c(0.1, 0, 0.1, 0)
+      ) +
       scale_y_continuous(
         expand = c(0, 0),
         limits = limits_y,
@@ -695,17 +667,17 @@ function(input, output, session) {
       scale_fill_identity() +
       scale_colour_identity() +
       labs(
-        # title = "'...You Say Goodbye, And I Say Hello'",
-        # subtitle = "Conversations started with Chat-GPT, by day of the week*",
-        # caption = "Source: OpenAI Data",
+        title = NULL,
+        subtitle = NULL,
         caption = NULL,
         x = NULL,
         y = NULL,
         colour = NULL
       ) +
       theme(
-        axis.text.x = element_text(size = 13, vjust = 0.2, margin = margin(t = 8, r = 2, b = 0, l = 2)), 
-        axis.line.x = element_line(linewidth = 0.55, colour = "black"),
+        text = element_text(family = "Inter"),
+        axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
+        axis.line.x = element_line(linewidth = 0.5, colour = "black"),
         axis.ticks = element_blank(),
         axis.text.y.right = element_blank(),
         panel.grid.major.x = element_blank(),
@@ -715,12 +687,25 @@ function(input, output, session) {
         panel.background = element_rect(fill = "#ffffffff")
       )
 
-    ## ...
+    ## Ouput the girafe() plot that will be passed the render function
     girafe(
-      ggobj = plot_2,
+      ggobj = conversations_wday_plot,
+      width_svg = 9,
+      height_svg = 6,
       options = list(
-        opts_toolbar(saveaspng = TRUE, pngname = "conversations_by_weekday.png", hidden = c("lasso_select", "lasso_deselect", "zoom_onoff", "zoom_rect", "zoom_reset")),
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "conversations_by_weekday.png",
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
         opts_zoom(max = 1),
+        opts_hover(reactive = FALSE),
         opts_tooltip(
           opacity = 0.80,
           offx = -20,
@@ -732,50 +717,76 @@ function(input, output, session) {
     )
   })
 
-  # Word cloud plot --------------------------------------------------------------
+  ## Word cloud plot --------------------------------------------------------------
+  
+  output$wordPlot <- renderImage({
 
-  output$wordPlot <- renderPlot({
+    ## ...
     req(conversations())
 
-    ## Define the colors
-    standout_color <- "black"
-    other_colors <- paste0("grey", as.integer(seq(76, 99, length.out = 24)))
-
-    ## Combine the colors into a single vector
-    word_colors <- c(standout_color, other_colors)
-
-    ## Create the word cloud
-    set.seed(42)
-    wday_plot <-
+    # Get the data for the word cloud
+    word_cloud_plot_data <-
       conversations() |>
       select("title") |>
       unnest_tokens(input = title, output = word) |>
       anti_join(get_stopwords(), by = join_by("word")) |>
       count(word) |>
       slice_max(n = 25, with_ties = FALSE, order_by = n) |>
+      select("word", "n")
+    
+    # Create a temporary file to save the plot to
+    outfile <- tempfile(fileext = ".svg")
+
+
+    # Define the colours for words
+    standout_colour <- "black"
+    other_colours <- paste0("grey", as.integer(seq(76, 99, length.out = 24)))
+    word_colours <- c(standout_colour, other_colours)
+
+    # Create the word cloud plot
+    word_cloud_plot <-
+      word_cloud_plot_data |>
       ggplot(
         aes(label = word, size = n, colour = fct_inorder(word))
       ) +
       geom_text_wordcloud_area(
+        seed = 42,
         rstep = 0.05,
         use_richtext = TRUE,
-        rm_outside = TRUE
+        rm_outside = TRUE,
+        family = "Inter"
       ) +
-      scale_size_area(max_size = 80) +
-      scale_colour_manual(values = word_colors) +
+      scale_size_area(max_size = 50) +
+      scale_colour_manual(values = word_colours) +
       theme_void() +
       theme(
         plot.background = element_blank(),
         panel.background = element_blank()
       )
 
-    ## ...
-    wday_plot
-  })
+    # Save the plot to the temporary file
+    ggsave(
+      outfile,
+      plot = word_cloud_plot,
+      width = 12,
+      height = 4, 
+      units = "in",
+      device = "svg"
+    )
 
-  ## Raw Data table
+    # Return a list containing the file path and content type
+    list(
+      src = outfile,
+      contentType = "image/svg+xml",
+      alt = "Word cloud of conversation topics"
+    )
+  }, deleteFile = TRUE)
+
+  ## Table shown on the `Raw Data` tab -------------------------------------------
+
   output$conversation_table <- renderDataTable(
     {
+      ## Check `conversations` exists
       req(conversations())
 
       ## Original data (for export)
@@ -821,14 +832,15 @@ function(input, output, session) {
     server = FALSE
   )
 
-  # --------------------------------------------------------------------
+  ## Allow users to download the underlying data into CSV format -------------------
 
   output$download_conversations <- downloadHandler(
     filename = function() {
       paste0("chat_history_", Sys.Date(), ".csv")
     },
     content = function(file) {
-      conversations_table <- conversations() |>
+      conversations_table <-
+        conversations() |>
         rename("chat_date" = "create_date") |>
         select(
           "chat_id",
@@ -846,48 +858,17 @@ function(input, output, session) {
     contentType = "text/csv"
   )
 
-  # Survey -------------------------------------------------------------
-
-  output$survey <- renderUI({
-    req(conversations())
-
-    ## Remove text column
-    conversations_table <-
-      conversations() |>
-      mutate(
-        text = paste0(str_sub(string = text, start = 1, end = 125), "...")
-      ) |>
-      rename("chat_date" = "create_date") |>
-      select(
-        "chat_id",
-        "chat_date",
-        "title",
-        "author",
-        "chat_seq",
-        "text",
-        "tokens"
-      )
-  })
-
-  # Verify data is ready before showing dashboard elements -------------------------------------------------------------
+  ## Verify data is ready before showing dashboard elements --------------
 
   dataReady <- reactive({
     !is.null(conversations()) && survey_status()
   })
 
+  ## Set based on the value of dataReady reactive value
   output$dataReady <- reactive({
     dataReady()
   })
 
+  ## Suspend showing the dashboard until `conversations` and `survey_status` set
   outputOptions(output, "dataReady", suspendWhenHidden = FALSE)
-
-  # See which set of elements to render -----------------------------------------------------
-
-  # output$charts_ui <- renderUI({
-  #   if (input$selected_tab == "Charts" && isTRUE(dataReady())) {
-  #     uiOutput("plot_output")
-  #   } else {
-  #     NULL
-  #   }
-  # })
 }
