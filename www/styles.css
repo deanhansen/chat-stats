@@ -1,0 +1,62 @@
+body {
+    background-image: url("digital_rain_100.gif");
+    background-repeat: repeat;
+    background-attachment: fixed;
+    background-size: auto;
+    background-color: #0a0a0a;
+    color: #00ff00;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.btn {
+    background-color: #dbdbdbff;
+    border-color: #FFF;
+    color: #000000ff;
+    font-weight: 500;
+    margin: 4px;
+}
+
+.btn:hover {
+    background-color: var(--bs-info);
+    border-color: var(--bs-info);
+    color: #fff;
+}
+
+.survey-btn .selected {
+    background-color: var(--bs-info);
+    border-color: var(--bs-info);
+    color: #fff;
+}
+
+.shiny-file-input-progress {
+    margin-top: 6px !important;
+}
+
+.shiny-input-container {
+    padding: 24px !important;
+}
+
+.matrix-box {
+    background-color: #0a0a0a !important;
+    border: 1px solid #00ff00;
+    color: #00ff00 !important;
+    box-shadow: 0 0 14px #00ff00;
+}
+
+.matrix-box .value-box-value {
+    font-weight: bold;
+}
+
+.matrix-icon {
+    color: #00ff00 !important;
+    text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+}
+
+.navbar, .navbar-nav .nav-link {
+    color: #00ff00 !important;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #00ff00;
+    text-shadow: 0 0 4px #00ff00;
+}

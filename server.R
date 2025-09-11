@@ -21,7 +21,7 @@ suppressMessages(
       library(scales)
       library(ggiraph)
       library(ggwordcloud)
-      library(ggridges)
+      library(sysfonts)
       library(showtext)
       library(ggtext)
       library(ggimage)
@@ -35,6 +35,34 @@ suppressMessages(
       ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
       library(reticulate)
 
+      ## ...
+      font_add_google(
+        name = "VT323", family = "vt"
+      )
+      font_add_google(
+        name = "Share Tech Mono", family = "share"
+      )
+
+      ## ...
+      showtext_auto()
+      showtext_opts(dpi = 300)
+
+      ## Plot style settings
+      bg_col <- "gray5"
+      main_col <- "#66FF00"
+      title_font <- "vt"
+      body_font <- "share"
+
+      ## ...
+      theme_set(
+        theme(
+          text = element_text(family = "share"),
+          panel.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
+          plot.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
+          panel.grid = element_line(, colour = "#2b2b2bff", linewidth = 0.25)
+        )
+      )
+
       ## Load Python module
       tiktoken <- import("tiktoken")
 
@@ -43,15 +71,6 @@ suppressMessages(
     })
   )
 )
-
-## Custom ggplot2 theme
-theme_dashboard <- function() {
-  theme(
-    text = element_text(family = "Neucha"),
-    plot.background = element_rect(fill = "#F8F9FA", color = "#F8F9FA"),
-    panel.background = element_rect(fill = "transparent", color = "transparent")
-  )
-}
 
 ## Generate the survey options based on data provided by the user
 generate_survey_options <- function(true_val, n = 50, choose = 3) {
@@ -441,22 +460,57 @@ function(input, output, session) {
 
   ## Total messages sent by user ---------------------------------------------
 
-  output$total_messages <- renderText({
+  # output$total_messages <- renderText({
+  #   req(conversations())
+  #   conversations() |>
+  #     filter(author == "user") |>
+  #     nrow() |>
+  #     format(big.mark = ",")
+  # })
+
+  ## Total messages sent by assistant ---------------------------------------------
+
+  # output$total_tokens <- renderText({
+  #   req(conversations())
+  #   conversations() |>
+  #     filter(author == "assistant") |>
+  #     nrow() |>
+  #     format(big.mark = ",")
+  # })
+
+  ## Total messages exchanged with ChatGPT -----------------------------------
+
+  output$total_messages_exchanged <- renderText({
     req(conversations())
     conversations() |>
-      filter(author == "user") |>
       nrow() |>
       format(big.mark = ",")
   })
 
-  ## Total messages sent by assistant ---------------------------------------------
+  ## Favourite day to talk to ChatGPT -----------------------------------
 
-  output$total_tokens <- renderText({
+  output$favourite_day_of_the_week <- renderText({
     req(conversations())
     conversations() |>
-      filter(author == "assistant") |>
-      nrow() |>
-      format(big.mark = ",")
+      group_by(chat_id, create_date) |> 
+      reframe(n = n_distinct(chat_id)) |> 
+      mutate(wday_label = wday(x = create_date, label = TRUE, abbr = FALSE, week_start = 1)) |> 
+      slice_max(order_by = n, n = 1, with_ties = FALSE) |> 
+      pull(wday_label) |> 
+      as.character()
+  })
+
+  ## Average token length by user and ChatGPT -----------------------------------
+
+  output$average_token_length <- renderText({
+    req(conversations())
+    conversations() |>
+      group_by(author) |> 
+      reframe(average_token_length = round(mean(tokens, na.rm = TRUE), 1)) |> 
+      mutate(author = if_else(author == "user", "You", "ChatGPT")) |> 
+      mutate(average_token_length_label = glue("{average_token_length}")) |>
+      pull(average_token_length_label) |> 
+      paste(collapse = "\n vs ")
   })
 
   ## Total conversations started ---------------------------------------------
@@ -473,7 +527,7 @@ function(input, output, session) {
     format(n_distinct(conversations()$create_date), big.mark = ",")
   })
 
-  ## Token distribution plot --------------------------------------------------------------
+  ## Token ECDF plot --------------------------------------------------------------
 
   output$distPlot <- renderGirafe({
     ## Check `conversations` exists
@@ -512,7 +566,7 @@ function(input, output, session) {
       scale_x_continuous(
         labels = label_comma(big.mark = ","),
         limits = limits_x,
-        expand = c(0.05, 0)
+        expand = c(0, 0, 0, 0)
       ) +
       scale_y_continuous(
         position = "right",
@@ -532,16 +586,11 @@ function(input, output, session) {
         color = NULL
       ) +
       theme(
-        text = element_text(family = "sans"),
-        axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
-        axis.text.y = element_text(size = 13, hjust = 0.4, vjust = -0.4, margin = margin(t = 0, r = -60, b = 0, l = -60)),
+        axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 5, r = 0, b = 0, l = 0)),
+        axis.text.y = element_text(size = 13),
         axis.line.x = element_line(linewidth = 0.5, colour = "black"),
-        panel.grid.major.x = element_line(linewidth = 0.5, colour = "black"),
         panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_line(linewidth = 0.5, colour = "black"),
         panel.grid.minor.y = element_blank(),
-        plot.background = element_blank(),
-        panel.background = element_rect(fill = "#ffffffff"),
         legend.position = "top",
         legend.key.size = unit(x = 6, units = "pt"),
         legend.text = element_text(size = 13, face = "bold", margin = margin(t = 0, r = 5, b = 0, l = 5))
@@ -603,29 +652,29 @@ function(input, output, session) {
         colour = if_else(create_time_wday < 6, "white", "black"),
         rank = rank(-n)
       ) |>
-      group_by(rank) |> 
-      mutate(
-        rank = cur_group_id(),
-        emoji_url = case_when(
-          rank == 1L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f947.svg",
-          rank == 2L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f948.svg",
-          rank == 3L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f949.svg",
-          .default = NA
-        )
-      ) |> 
-      ungroup() |> 
+      # group_by(rank) |> 
+      # mutate(
+      #   rank = cur_group_id(),
+      #   emoji_url = case_when(
+      #     rank == 1L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f947.svg",
+      #     rank == 2L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f948.svg",
+      #     rank == 3L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f949.svg",
+      #     .default = NA
+      #   )
+      # ) |> 
+      # ungroup() |> 
       select(
         "create_time_wday",
         "create_time_wday_label",
         "n",
         "fill",
         "colour",
-        "emoji_url"
+        # "emoji_url"
       )
     
     ## Set the plot y-axis limits
     max_y <- max(conversations_wday_plot_data$n)
-    limits_y <- c(0, ifelse(max_y / 50 == max_y, max_y + 50, ceiling(max_y / 50) * 50))
+    limits_y <- c(0, ceiling(max_y / 25) * 26)
 
     ## Create the conversations by weekday plot
     conversations_wday_plot <-
@@ -649,11 +698,11 @@ function(input, output, session) {
         vjust = 1.75,
         size = 13 / .pt
       ) +
-      geom_image(
-        aes(x = create_time_wday_label, image = emoji_url, y = n + 5),
-        size = 0.07,
-        inherit.aes = FALSE
-      ) +
+      # geom_image(
+      #   aes(x = create_time_wday_label, image = emoji_url, y = n + 6),
+      #   size = 0.07, 
+      #   inherit.aes = FALSE
+      # ) +
       scale_x_discrete(
         expand = c(0.1, 0, 0.1, 0)
       ) +
@@ -675,7 +724,6 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        text = element_text(family = "sans"),
         axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
         axis.line.x = element_line(linewidth = 0.5, colour = "black"),
         axis.ticks = element_blank(),
@@ -683,8 +731,148 @@ function(input, output, session) {
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        panel.background = element_rect(fill = "#ffffffff")
+        panel.grid.minor.y = element_blank()
+      )
+
+    ## Ouput the girafe() plot that will be passed the render function
+    girafe(
+      ggobj = conversations_wday_plot,
+      width_svg = 9,
+      height_svg = 6,
+      options = list(
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "conversations_by_weekday.png",
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
+        opts_zoom(max = 1),
+        opts_hover(reactive = FALSE),
+        opts_tooltip(
+          opacity = 0.80,
+          offx = -20,
+          offy = 20,
+          delay_mouseover = 500,
+          delay_mouseout = 500
+        )
+      )
+    )
+  })
+
+
+  ## Weekday column plot ----------------------------------------------------------------------------------------
+
+  output$wdayPlot <- renderGirafe({
+    ## Check `conversations` exists
+    req(conversations())
+
+    ## Set the x-axis labels
+    x_axis_labels <- c(
+      "Mon",
+      "Tues",
+      "Wed",
+      "Thurs",
+      "Fri",
+      "Sat",
+      "Sun"
+    )
+
+    ## Get the ranks based on the highest average at the end
+    conversations_wday_plot_data <-  
+      conversations() |>
+      group_by(create_time_wday) |>
+      reframe(n = n_distinct(chat_id)) |>
+      mutate(
+        create_time_wday_label = factor(x = create_time_wday, labels = x_axis_labels),
+        fill = if_else(create_time_wday < 6, "grey10", "grey80"),
+        colour = if_else(create_time_wday < 6, "white", "black"),
+        rank = rank(-n)
+      ) |>
+      # group_by(rank) |> 
+      # mutate(
+      #   rank = cur_group_id(),
+      #   emoji_url = case_when(
+      #     rank == 1L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f947.svg",
+      #     rank == 2L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f948.svg",
+      #     rank == 3L ~ "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f949.svg",
+      #     .default = NA
+      #   )
+      # ) |> 
+      # ungroup() |> 
+      select(
+        "create_time_wday",
+        "create_time_wday_label",
+        "n",
+        "fill",
+        "colour",
+        # "emoji_url"
+      )
+    
+    ## Set the plot y-axis limits
+    max_y <- max(conversations_wday_plot_data$n)
+    limits_y <- c(0, ceiling(max_y / 25) * 26)
+
+    ## Create the conversations by weekday plot
+    conversations_wday_plot <-
+      conversations_wday_plot_data |>
+      ggplot(
+        aes(
+          x = create_time_wday_label,
+          y = n,
+          colour = colour,
+          fill = fill,
+          data_id = create_time_wday_label
+        )
+      ) +
+      geom_col_interactive(
+        colour = "transparent",
+        width = 0.45,
+        show.legend = FALSE
+      ) +
+      geom_text_interactive(
+        aes(label = n),
+        vjust = 1.75,
+        size = 13 / .pt
+      ) +
+      # geom_image(
+      #   aes(x = create_time_wday_label, image = emoji_url, y = n + 6),
+      #   size = 0.07, 
+      #   inherit.aes = FALSE
+      # ) +
+      scale_x_discrete(
+        expand = c(0.1, 0, 0.1, 0)
+      ) +
+      scale_y_continuous(
+        expand = c(0, 0),
+        limits = limits_y,
+        minor_breaks = NULL,
+        position = "right",
+        labels = label_comma()
+      ) +
+      scale_fill_identity() +
+      scale_colour_identity() +
+      labs(
+        title = NULL,
+        subtitle = NULL,
+        caption = NULL,
+        x = NULL,
+        y = NULL,
+        colour = NULL
+      ) +
+      theme(
+        axis.text.x = element_text(size = 13, vjust = 0, margin = margin(t = 4, r = 0, b = 0, l = 0)),
+        axis.line.x = element_line(linewidth = 0.5, colour = "black"),
+        axis.ticks = element_blank(),
+        axis.text.y.right = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -753,16 +941,11 @@ function(input, output, session) {
         seed = 42,
         rstep = 0.05,
         use_richtext = TRUE,
-        rm_outside = TRUE,
-        family = "sans-serif"
+        rm_outside = TRUE
       ) +
       scale_size_area(max_size = 50) +
       scale_colour_manual(values = word_colours) +
-      theme_void() +
-      theme(
-        plot.background = element_blank(),
-        panel.background = element_blank()
-      )
+      theme_void()
 
     # Save the plot to the temporary file
     ggsave(
