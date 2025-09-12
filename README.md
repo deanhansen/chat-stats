@@ -1,4 +1,4 @@
-# \<sos> ChatGPT Conversation History Explorer \<eos>
+# \<sos> ChatGPT Conversation History Explorer \<eos> ![Preview of the homepage](www/shiny_logo.png)
 
 ![Preview of the homepage](www/homepage.png)
 
