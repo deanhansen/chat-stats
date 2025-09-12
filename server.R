@@ -80,11 +80,18 @@ suppressMessages(
 generate_survey_options <- function(true_val, n = 50, choose = 3) {
   offsets <- runif(n, min = -0.4, max = 0.2)
   options <- round(true_val * (1 + offsets))
-  options <- options[options > 0]
-  options <- options[!is.na(options)]
-  options <- sample(options, 3, replace = FALSE)
-  options <- unique(c(options, true_val))
-  format(sort(options), big.mark = ",")
+  options <- unique(options[options > 0 & !is.na(options)])
+  
+  if (length(options) < choose) {
+    extra <- round(true_val * (1 + runif(choose - length(options), -0.3, 0.3)))
+    extra <- extra[extra > 0]
+    options <- unique(c(options, extra))
+  }
+  
+  options <- unique(c(options, true_val))  
+  chosen <- sample(options, min(choose, length(options)), replace = FALSE)  
+  all_opts <- unique(c(chosen, true_val))
+  format(sort(all_opts), big.mark = ",")
 }
 
 # Shiny Server -----------------------------------------------------------
