@@ -1,4 +1,8 @@
-# 💬 ChatGPT Conversation History Explorer
+# \<start> ChatGPT Conversation History Explorer \</stop>
+
+![Preview of the homepage](www/homepage.png)
+
+![Preview of the Dashboard panel](www/dashboard.png)
 
 ## Key Features
 - Dive deeper into your data with interactive plots and card visuals.
