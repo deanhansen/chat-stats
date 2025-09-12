@@ -28,8 +28,8 @@ suppressMessages(
       library(ggtext)
 
       ## Text cleanup
-      library(stopwords)
       library(tidytext)
+      library(stopwords)
 
       ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
       library(reticulate)
