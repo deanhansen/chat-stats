@@ -228,6 +228,5 @@ page_navbar(
   includeCSS("www/styles.css"),
 
   # JavaScript -----------------------------------------------------------
-  includeScript("www/matrix_text.js"),
   includeScript("www/survey_btn.js")
 )
