@@ -3076,7 +3076,7 @@
       "checksum": "d076a8b00839926613c79c49c30f7d3c"
     },
     "conversations.py": {
-      "checksum": "cb05a576ffb5f8bae93f218726c6a08d"
+      "checksum": "6c795c2a65119a6b4b805b709bd8b0c9"
     },
     "README.md": {
       "checksum": "ce22bd9cf1e29b835fcb3b6b4f423866"
@@ -3085,7 +3085,7 @@
       "checksum": "b75735ce98f3ea7d2891ad317dd4803b"
     },
     "server.R": {
-      "checksum": "0b94b5530edb8170ec1023343f6c6e03"
+      "checksum": "7403ef56e025d3c747ad170e6962c31d"
     },
     "ui.R": {
       "checksum": "833916477ceccadea3124bf6db365624"
@@ -3130,7 +3130,7 @@
       "checksum": "4df83d0e3d5a27319964e9aea39d9394"
     },
     "www/styles.css": {
-      "checksum": "18596a4405640a4742101d40250e66b9"
+      "checksum": "3f6390817344170aff1b76ee5f89d839"
     },
     "www/survey_btn.js": {
       "checksum": "4ba76be8db0f11e4b444a6bf1eac026c"
