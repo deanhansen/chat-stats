@@ -1,25 +1,20 @@
-# Visulize your ChatGPT conversation history!
+# 💬 ChatGPT Conversation History Explorer
 
-## ✨ Features
-- Personalized Insights: Discover your usage habits with key statistics, including the total number of conversations, messages sent, and your most active days.
-- Interactive Visualizations: Dive deeper into your data with interactive plots built using the ggiraph package. Hover over data points to reveal details and save plots to share with others.
-- Token Analysis: Understand the "length" of your conversations by visualizing the token distribution for both your messages and ChatGPT's responses.
-- Aesthetic and Minimalist Design: The app features a custom "hacker" theme with a dark background and neon green text, giving it a unique and modern feel.
-- Pre-Dashboard Survey: Before you view your data, a fun, auto-generated quiz tests your knowledge of your own ChatGPT usage and general AI facts.
-- Data Privacy: All data processing is done locally within the app; your conversation history is never stored or sent to a remote server.
+## Key Features
+- Dive deeper into your data with interactive plots and card visuals.
+- Discover your usage habits with key statistics, including the total number of conversations, messages sent, and your most active day of the week.
+- A fun quiz tests your knowledge of AI and your own usage patterns.
+- Get some inspiration by listening to the Matrix (1999) soundtrack.
+- Download a formatted copy of your conversation history straight to CSV.
 
-## 🚀 How to Use
+## How to Use
+- Download your conversation history from OpenAI [here](https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data).
+- Once downloaded, unzip the folder, find the conversation history `.json` file and upload it to the dashboard.
 
-- Download Your Data: First, you need to export your conversation history from OpenAI. Follow the official instructions on the OpenAI website to download your data. This will provide you with a zip file containing conversations.json.
-- Launch the App: Run the app locally on your machine.
-- Upload File: On the welcome screen, click the "Upload File" button and select the conversations.json file from your downloaded zip folder.
-- Take the Survey: Once the data is processed, a survey will pop up. Answer the questions to see how well you know your own habits.
-- Explore Your Dashboard: After the survey, the full dashboard will be revealed, allowing you to explore your ChatGPT usage in detail.
+## Technical Details
+- Built with `shiny`, and `bslib`.
+- Interactive plots powered by `ggiraph`.
+- Minimalist CSS for a matrix inspired aesthetic.
 
-## 📊 Dashboard Visuals
-
-- Key Metrics Boxes: A row of boxes at the top displays quick stats like total conversations, total messages, average token length, and your most frequent day for chatting.
-- Conversations by Weekday: A bar chart shows a breakdown of how many conversations you start on each day of the week.
-- Token Distribution (ECDF Plot): This plot compares the cumulative distribution of token counts for both your messages and ChatGPT's responses, providing a clear picture of who is more verbose.
-- Most Common Conversation Topics: A bar chart (or optional word cloud) reveals the top words from your conversation titles, giving you a quick summary of the topics you discuss most often.
-- Raw Data Table: A searchable and sortable table of your entire conversation history, with an option to download the data as a CSV.
+## Data Privacy
+- All data processing is done locally within the app; your conversation history is never stored or sent to a remote server
