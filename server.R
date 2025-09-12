@@ -7,6 +7,7 @@ options(shiny.maxRequestSize = 50 * 1024^2)
 suppressMessages(
   suppressMessages(
     suppressWarnings({
+
       ## Data cleaning and transformation
       library(jsonlite)
       library(readr)
@@ -22,35 +23,25 @@ suppressMessages(
       library(ggplot2)
       library(scales)
       library(ggiraph)
-      library(ggwordcloud)
-      library(sysfonts)
+      # library(ggwordcloud)
       library(showtext)
       library(ggtext)
 
-      # library(ggimage)
-      library(ggfx)
-
       ## Text cleanup
+      library(stopwords)
       library(tidytext)
 
       ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
       library(reticulate)
 
-      ## ...
-      font_add_google(name = "VT323", family = "vt")
+      ## Add fonts for the plots
       font_add_google(name = "Share Tech Mono", family = "share")
 
-      ## ...
+      ## Set the font resolution
       showtext_auto()
       showtext_opts(dpi = 300)
 
-      ## Plot style settings
-      bg_col <- "gray5"
-      main_col <- "#66FF00"
-      title_font <- "vt"
-      body_font <- "share"
-
-      ## ...
+      ## Set the theme for all plots
       theme_set(
         theme(
           text = element_text(family = "share", colour = "#00ff00"),
@@ -79,6 +70,7 @@ suppressMessages(
 
       ## Load tokenizer
       enc <- tiktoken$get_encoding("cl100k_base")
+      
     })
   )
 )
