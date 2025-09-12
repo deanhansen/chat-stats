@@ -58,7 +58,7 @@ suppressMessages(
           text = element_text(family = "share", colour = "#00ff00"),
           axis.text.x = element_markdown(size = 18, colour = "#00ff00", vjust = 0, margin = margin(t = 12, r = 0, b = 8, l = 0)),
           axis.text.y.right = element_markdown(size = 18, colour = "#00ff00", hjust = 0, margin = margin(t = 0, r = 8, b = 0, l = 12)),
-          legend.text = element_markdown(size = 18, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 0)),
+          legend.text = element_markdown(size = 18, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
           panel.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
           plot.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
           legend.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
@@ -69,6 +69,9 @@ suppressMessages(
           axis.ticks.y = element_line(linewidth = 0.5),
           legend.key.height = unit(0.45, "in"),
           legend.key.width = unit(0.6, "in"),
+          legend.key = element_rect(fill = "#0a0a0a", color = NA),
+          legend.key.size = unit(0.8, "lines"),
+          legend.spacing.x = unit(0.3, "cm"),
           legend.position = "top"
         )
       )
@@ -609,7 +612,7 @@ function(input, output, session) {
       ) +
       geom_text_interactive(
         aes(label = n),
-        vjust = 1.8,
+        vjust = 1.9,
         size = 18 / .pt,
         colour = "#00ff00",
         family = "share"
@@ -651,7 +654,6 @@ function(input, output, session) {
       width_svg = 9,
       height_svg = 6,
       options = list(
-        opts_selection(type = "none"),
         opts_toolbar(
           saveaspng = FALSE,
           pngname = "conversations_by_weekday",
@@ -663,15 +665,9 @@ function(input, output, session) {
             "zoom_reset"
           )
         ),
-        opts_zoom(max = 1),
-        opts_hover(reactive = FALSE),
-        opts_tooltip(
-          opacity = 0.80,
-          offx = -20,
-          offy = 20,
-          delay_mouseover = 500,
-          delay_mouseout = 500
-        )
+        opts_hover(css = "stroke-width: 5pt;"),
+        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
       )
     )
   })
@@ -689,7 +685,10 @@ function(input, output, session) {
       reframe(
         avg_tokens_per_conversation_by_author = mean(tokens, na.rm = TRUE)
       ) |>
-      mutate(author = if_else(author_id == 1L, "You", "ChatGPT")) |>
+      mutate(
+        author = if_else(author_id == 1L, "You", "ChatGPT"),
+        author = factor(author, levels = c("You", "ChatGPT"))
+      ) |>
       select(
         "chat_id",
         "author_id",
@@ -705,7 +704,7 @@ function(input, output, session) {
     token_distribution_plot <-
       token_distribution_plot_data |>
       ggplot(
-        aes(x = avg_tokens_per_conversation_by_author, colour = author)
+        aes(x = avg_tokens_per_conversation_by_author, colour = author, data_id = author)
       ) +
       geom_step_interactive(
         aes(y = after_stat(y), group = author),
@@ -725,7 +724,7 @@ function(input, output, session) {
         expand = c(0, 0)
       ) +
       scale_colour_manual(
-        values = c("ChatGPT" = "#10A37F", "You" = "#ffffffff")
+        values = c("You" = "#ffd23f", "ChatGPT" = "#0091d4ff")
       ) +
       labs(
         title = NULL,
@@ -737,7 +736,7 @@ function(input, output, session) {
       theme(
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(),
-        plot.margin = unit(c(5, 40, 5, 50), "pt")
+        plot.margin = unit(c(5, 35, 5, 55), "pt")
       )
 
     ## Generate output given to the render function
@@ -746,7 +745,6 @@ function(input, output, session) {
       width_svg = 9,
       height_svg = 6,
       options = list(
-        opts_selection(type = "none"),
         opts_toolbar(
           saveaspng = FALSE,
           pngname = "tokens_ecdf_distribution",
@@ -758,13 +756,9 @@ function(input, output, session) {
             "zoom_reset"
           )
         ),
-        opts_tooltip(
-          opacity = 0.80,
-          offx = -20,
-          offy = 20,
-          delay_mouseover = 500,
-          delay_mouseout = 500
-        )
+        opts_hover(css = "stroke-width: 5pt;"),
+        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
       )
     )
   })

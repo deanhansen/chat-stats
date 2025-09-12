@@ -1,49 +1,70 @@
+/* General body and typography styles */
 body {
-
     background-color: #0a0a0a;
     color: #00ff00;
     font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem; /* Increase base font size for better readability */
 }
 
-.btn {
-    background-color: #dbdbdbff;
-    border-color: #FFF;
-    color: #000000ff;
-    font-weight: 500;
-    margin: 4px;
-}
+/* --------------------------------------------------- */
 
-.btn:hover {
-    background-color: var(--bs-info);
-    border-color: var(--bs-info);
-    color: #fff;
-}
+/* File Input & Download Link Styles */
 
-.survey-btn .selected {
-    background-color: var(--bs-info);
-    border-color: var(--bs-info);
-    color: #fff;
-}
-
-.shiny-file-input-progress {
-    margin-top: 6px !important;
-}
-
-.shiny-input-container {
-    padding: 24px !important;
-}
-
+/* This is the main container for the file input and download link */
 #conversation_history_wrapper {
     display: flex;
-    justify-content: center;      /* vertical centering */
-    align-items: center;          /* horizontal centering */
+    flex-direction: column; /* Stack the elements vertically */
+    align-items: center; /* Center items horizontally */
+    justify-content: center; /* Center content vertically in the wrapper */
     height: 60vh;
     width: 100% !important;
     padding: 0 !important;
-    gap: 16px;                    /* space between file input and text */
-    text-align: center;           /* ensures text and link are centered */
+    gap: 16px; /* Space between the file input group and the text below it */
+    text-align: center;
 }
 
+/* This targets the file input group, which contains the button and the text field */
+#conversation_history_wrapper .form-group.shiny-input-container:has(.btn-file) {
+    display: flex; /* Use Flexbox to align button and text field */
+    align-items: stretch; /* Make both items the same height */
+    justify-content: center;
+    width: 600px; /* Set a fixed width for the input group */
+    max-width: 90%; /* Ensure responsiveness on smaller screens */
+    padding: 0; /* Remove padding inherited from parent */
+    margin: 0;
+}
+
+/* Style the text field area */
+.input-group .form-control {
+    background-color: transparent !important;
+    color: #00ff00;
+    border: 1px solid #00ff00; /* Set border to match the button */
+    font-size: 1.1rem; /* Make text larger and consistent */
+    height: auto; /* Allow height to be determined by Flexbox */
+    border-radius: 0;
+    flex-grow: 1; /* Allow it to take up available space */
+}
+
+/* Style the "Browse..." button specifically */
+.input-group .btn-file {
+    color: #00ff00 !important;
+    background-color: transparent !important;
+    border: 1px solid #00ff00 !important;
+    border-radius: 0;
+    font-size: 1.1rem; /* Match the text field font size */
+    height: auto; /* Allow height to be determined by Flexbox */
+}
+
+/* Style for the "To download..." link text */
+#conversation_history_wrapper > div:last-of-type {
+    font-size: 1rem;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* --------------------------------------------------- */
+
+/* Matrix Box Styles (Unchanged) */
 
 .matrix-box {
     background-color: #0a0a0a !important;
@@ -67,6 +88,10 @@ body {
     text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
 }
 
+/* --------------------------------------------------- */
+
+/* Navbar Styles (Unchanged) */
+
 .navbar, .navbar-nav .nav-link {
     color: #00ff00 !important;
 }
@@ -76,9 +101,13 @@ body {
     text-shadow: 0 0 4px #00ff00;
 }
 
+/* --------------------------------------------------- */
+
+/* Value Box Text Styles (Unchanged) */
+
 #total_messages_exchanged,
 #favourite_day_of_the_week,
 #average_token_length,
 #percentage_of_days_in_2025 {
-  font-size: 1.5rem;
+    font-size: 1.5rem;
 }

@@ -1,3 +1,4 @@
 .Rproj.user
 conversations_parsed.json
 conversations.json
+.DS_Store
