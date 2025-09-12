@@ -194,13 +194,16 @@ a.ggiraph-toolbar-icon-saveaspng {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;             /* smaller width */
-    height: 40px;            /* smaller height */
+    width: 40px;
+    /* smaller width */
+    height: 40px;
+    /* smaller height */
     padding: 0;
     background-color: #0a0a0a;
     border: 1px solid #00ff00;
-    box-shadow: 0 0 6px #00ff00; /* reduced shadow */
-    border-radius: 0;
+    box-shadow: 0 0 6px #00ff00;
+    /* reduced shadow */
+    border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -211,7 +214,8 @@ a.ggiraph-toolbar-icon-saveaspng {
 
 /* Scale the icon inside proportionally */
 a.ggiraph-toolbar-icon-saveaspng svg {
-    width: 18px;    /* smaller icon */
+    width: 18px;
+    /* smaller icon */
     height: 18px;
     fill: #00ff00;
 }
@@ -219,8 +223,10 @@ a.ggiraph-toolbar-icon-saveaspng svg {
 /* Hover effect matching matrix-box style */
 a.ggiraph-toolbar-icon-saveaspng:hover {
     background-color: #0a0a0a;
-    box-shadow: 0 0 10px #00ff00; /* smaller hover glow */
-    transform: scale(1.05);        /* subtle scale up */
+    box-shadow: 0 0 10px #00ff00;
+    /* smaller hover glow */
+    transform: scale(1.05);
+    /* subtle scale up */
 }
 
 /* Optional: active click effect */
@@ -229,6 +235,11 @@ a.ggiraph-toolbar-icon-saveaspng:active {
 }
 
 /* ... */
+
 .modal-header {
     border-bottom: 1px solid #00ff00;
+}
+
+.modal-footer {
+    border-top: none;
 }

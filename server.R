@@ -87,7 +87,6 @@ generate_survey_options <- function(true_val, n = 50, choose = 3) {
   format(sort(options), big.mark = ",")
 }
 
-
 # Shiny Server -----------------------------------------------------------
 
 function(input, output, session) {
@@ -129,11 +128,33 @@ function(input, output, session) {
     output_file <- tempfile(fileext = ".json")
 
     ## Run script that extracts relevant parts of the conversation history into a new .json file
-    system2(
-      command = "python3",
-      args = c("conversations.py", uploaded_file, output_file),
-      wait = TRUE
-    )
+    result <- tryCatch({
+      exit_code <- system2(
+        command = "python3",
+        args = c("conversations.py", uploaded_file, output_file),
+        stdout = TRUE,
+        stderr = TRUE,
+        wait = TRUE
+      )
+
+      attr(exit_code, "status") %||% 0  # return 0 if no error
+    }, error = function(e) {
+      showNotification(
+        paste("Error running Python script:", e$message),
+        type = "error",
+        duration = 10
+      )
+      return(1) # non-zero means error
+    })
+
+    if (result != 0) {
+      showNotification(
+        "There was a problem processing your file. Please check the format and try again.",
+        type = "error",
+        duration = 10
+      )
+      return(NULL)
+    }
 
     ## Apply additional data processing to the .json file returned by the Python script
     conversation_history <-
@@ -240,7 +261,7 @@ function(input, output, session) {
 
       ## Based on user data
       q2 = list(
-        prompt = "On how many different days have you used ChatGPT?",
+        prompt = "On how many different days have you used ChatGPT since it's release?",
         options = list(
           "opt_1" = q2_options[1],
           "opt_2" = q2_options[2],
@@ -415,10 +436,13 @@ function(input, output, session) {
       modalDialog(
         title = paste("You got", correct_answers, "out of", total_questions, "questions right"),
         new_survey_ui,
-        footer = actionButton("continue_btn", "Continue", class = "btn-primary"),
-        size = "xl"
+        actionButton(inputId = "continue_btn", class = "btn btn-default", label = "Close"),
+        footer = NULL,
+        size = "xl",
+        easyClose = FALSE
       )
     )
+
   })
 
   ## Observe the 'Skip' button to remove the modal
@@ -819,7 +843,7 @@ function(input, output, session) {
       options = list(
         opts_toolbar(
           saveaspng = TRUE,
-          pngname = "top_25_words", 
+          pngname = "top_ten_topics", 
           hidden = c(
             "lasso_select",
             "lasso_deselect",
