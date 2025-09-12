@@ -32,7 +32,8 @@ my_theme <- bs_theme(
 
 file_input <- fileInput(
   inputId = "conversation_history",
-  label = "Upload Conversation History",
+  label = NULL,
+  placeholder = "Upload your conversation_history.json file", 
   accept = ".json",
   multiple = FALSE,
   width = "100%"
@@ -111,7 +112,7 @@ first_row_plots <- list(
       "You Say Goodbye, And I Say Hello",
       tooltip(
         bs_icon("info-circle", class = "matrix-icon"),
-        "This plot shows the total separate conversations started on each day of the week."
+        "The number of separate conversations started by day of the week."
       )
     ),
     girafeOutput("wdayPlot", width = "100%")
@@ -122,10 +123,26 @@ first_row_plots <- list(
       "Chatty, Aren't Chya",
       tooltip(
         bs_icon("info-circle", class = "matrix-icon"),
-        "Compare your messages length with ChatGPT's. Short vs. chatty messages!"
+        "Compare your message lengths with ChatGPT's. Short vs. chatty!"
       )
     ),
     girafeOutput("distPlot", width = "100%")
+  )
+)
+
+# Second Row Plots ----------------------------------------
+
+second_row_plots <- list(
+  card(
+    class = "matrix-box",
+    card_header(
+      "Now Tell Me, What's On Your Mind",
+      tooltip(
+        bs_icon("info-circle", class = "matrix-icon"),
+        "What topics you're asking ChatGPT about!"
+      )
+    ),
+    girafeOutput("wordPlot", width = "100%")
   )
 )
 
@@ -153,26 +170,19 @@ page_navbar(
           tags$a(
               href = "https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data",
               target = "_blank",
-              "link"
-            )
+              "link",
+              style = "color: #ffffffff;"
+            ),
           )
         ),
-    #   div(
-    #     id = "instructions_wrapper",
-    #     tags$ul(
-    #       tags$h4("How to Download Your Conversation History"),
-    #       tags$li("Go to your OpenAI account settings: Settings > Data Controls > Export Data"),
-    #       tags$li("Click Request Export. OpenAI will prepare a zip file containing conversation_history.json"),
-    #       tags$li("Download and extract the zip file to get conversation_history.json"),
-    #       tags$li("Load it in R or Python for processing.")
-    #     )
-    #   )
-    ),
+      ),
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
       div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_column_wrap(gap = "12px", !!!first_row_boxes)),
       div(id = "second_row_boxes_wrapper", style = "display: none;", layout_column_wrap(gap = "12px", !!!second_row_boxes)),
-      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_column_wrap(gap = "12px", !!!first_row_plots))
+      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_column_wrap(gap = "12px", !!!first_row_plots)),
+      # layout_column_wrap(gap = "12px", !!!second_row_plots)
+      div(id = "second_row_plots_wrapper", style = "display: none;", layout_column_wrap(gap = "12px", !!!second_row_plots))
     )
   ),
 

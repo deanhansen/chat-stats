@@ -3,68 +3,130 @@ body {
     background-color: #0a0a0a;
     color: #00ff00;
     font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem; /* Increase base font size for better readability */
+    font-size: 1.1rem;
 }
+
+html,
+body {
+    height: auto;
+    /* don’t lock height */
+    min-height: 100vh;
+    /* ensure at least full screen */
+    overflow-y: auto;
+    /* enable vertical scroll */
+}
+
 
 /* --------------------------------------------------- */
 
-/* File Input & Download Link Styles */
+/* Survey button */
+.survey-btn {
+    background-color: #0a0a0a;
+    color: #00ff00;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    gap: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
 
-/* This is the main container for the file input and download link */
+/* This targets the button when it has the .selected class */
+.survey-btn.shiny-bound-input.selected {
+    background-color: #00ff00;
+    color: #0a0a0a;
+}
+
+/* Make the Upload progress bar span the full container width */
+#conversation_history_wrapper .progress {
+    width: 100% !important;
+    /* full width of parent */
+    margin-top: 0.5rem;
+    /* space above */
+    border: 1px solid #00ff00;
+    /* match theme */
+    border-radius: 0;
+    /* square edges to match */
+    background-color: #0a0a0a;
+    /* background blend */
+    box-shadow: 0 0 8px #00ff00;
+}
+
+#conversation_history_wrapper .progress-bar {
+    background-color: #00ff00 !important;
+    text-shadow: 0 0 4px #0f0;
+}
+
+.survey-results {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 1.1rem;
+    gap: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
+
+
+/* --------------------------------------------------- */
+
+/* Main container for file input and download link */
 #conversation_history_wrapper {
     display: flex;
-    flex-direction: column; /* Stack the elements vertically */
-    align-items: center; /* Center items horizontally */
-    justify-content: center; /* Center content vertically in the wrapper */
-    height: 60vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
     width: 100% !important;
     padding: 0 !important;
-    gap: 16px; /* Space between the file input group and the text below it */
-    text-align: center;
 }
 
-/* This targets the file input group, which contains the button and the text field */
+/* File input group container */
 #conversation_history_wrapper .form-group.shiny-input-container:has(.btn-file) {
-    display: flex; /* Use Flexbox to align button and text field */
-    align-items: stretch; /* Make both items the same height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    width: 600px; /* Set a fixed width for the input group */
-    max-width: 90%; /* Ensure responsiveness on smaller screens */
-    padding: 0; /* Remove padding inherited from parent */
-    margin: 0;
+    width: 100%;
+    max-width: 90%;
 }
 
-/* Style the text field area */
+/* Text field */
 .input-group .form-control {
     background-color: transparent !important;
     color: #00ff00;
-    border: 1px solid #00ff00; /* Set border to match the button */
-    font-size: 1.1rem; /* Make text larger and consistent */
-    height: auto; /* Allow height to be determined by Flexbox */
+    border: 1px solid #00ff00;
+    font-size: 1.2rem;
     border-radius: 0;
-    flex-grow: 1; /* Allow it to take up available space */
+    flex: 1 1 auto;
+    padding: 0.5rem 1rem;
 }
 
-/* Style the "Browse..." button specifically */
+/* Browse button */
 .input-group .btn-file {
     color: #00ff00 !important;
     background-color: transparent !important;
     border: 1px solid #00ff00 !important;
     border-radius: 0;
-    font-size: 1.1rem; /* Match the text field font size */
-    height: auto; /* Allow height to be determined by Flexbox */
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    height: auto;
+    box-sizing: border-box;
 }
 
-/* Style for the "To download..." link text */
-#conversation_history_wrapper > div:last-of-type {
-    font-size: 1rem;
+
+/* Download link text */
+#conversation_history_wrapper>div:last-of-type {
+    font-size: 1.2rem;
     white-space: nowrap;
+    color: #ffffffff;
     text-align: center;
+    padding-top: 24px;
 }
+
 
 /* --------------------------------------------------- */
 
-/* Matrix Box Styles (Unchanged) */
+/* Matrix Box Styles */
 
 .matrix-box {
     background-color: #0a0a0a !important;
@@ -92,13 +154,19 @@ body {
 
 /* Navbar Styles (Unchanged) */
 
-.navbar, .navbar-nav .nav-link {
+.navbar,
+.navbar-nav .nav-link {
+    font-size: 1.1rem !important;
     color: #00ff00 !important;
 }
 
 .navbar-nav .nav-link:hover {
     color: #00ff00;
     text-shadow: 0 0 4px #00ff00;
+}
+
+.bslib-card .card-header {
+    font-size: 1.25rem !important;
 }
 
 /* --------------------------------------------------- */
@@ -110,4 +178,52 @@ body {
 #average_token_length,
 #percentage_of_days_in_2025 {
     font-size: 1.5rem;
+}
+
+/* --------------------------------------------------- */
+
+/* Graphs */
+
+.ggiraph-svg-bg {
+    stroke: #0a0a0a !important;
+    fill: #0a0a0a !important;
+}
+
+/* Style the PNG button like a smaller matrix-box */
+a.ggiraph-toolbar-icon-saveaspng {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;             /* smaller width */
+    height: 40px;            /* smaller height */
+    padding: 0;
+    background-color: #0a0a0a;
+    border: 1px solid #00ff00;
+    box-shadow: 0 0 6px #00ff00; /* reduced shadow */
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.ggiraph-toolbar {
+    background-color: #0a0a0a !important;
+}
+
+/* Scale the icon inside proportionally */
+a.ggiraph-toolbar-icon-saveaspng svg {
+    width: 18px;    /* smaller icon */
+    height: 18px;
+    fill: #00ff00;
+}
+
+/* Hover effect matching matrix-box style */
+a.ggiraph-toolbar-icon-saveaspng:hover {
+    background-color: #0a0a0a;
+    box-shadow: 0 0 10px #00ff00; /* smaller hover glow */
+    transform: scale(1.05);        /* subtle scale up */
+}
+
+/* Optional: active click effect */
+a.ggiraph-toolbar-icon-saveaspng:active {
+    transform: scale(0.95);
 }

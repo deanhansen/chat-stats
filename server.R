@@ -26,14 +26,12 @@ suppressMessages(
       library(sysfonts)
       library(showtext)
       library(ggtext)
+
       # library(ggimage)
       library(ggfx)
 
       ## Text cleanup
       library(tidytext)
-
-      ## For the survey
-      library(surveydown)
 
       ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
       library(reticulate)
@@ -56,9 +54,9 @@ suppressMessages(
       theme_set(
         theme(
           text = element_text(family = "share", colour = "#00ff00"),
-          axis.text.x = element_markdown(size = 18, colour = "#00ff00", vjust = 0, margin = margin(t = 12, r = 0, b = 8, l = 0)),
-          axis.text.y.right = element_markdown(size = 18, colour = "#00ff00", hjust = 0, margin = margin(t = 0, r = 8, b = 0, l = 12)),
-          legend.text = element_markdown(size = 18, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
+          axis.text.x = element_markdown(size = 16, colour = "#00ff00", vjust = 0, margin = margin(t = 12, r = 0, b = 8, l = 0)),
+          axis.text.y.right = element_markdown(size = 16, colour = "#00ff00", hjust = 0, margin = margin(t = 0, r = 8, b = 0, l = 12)),
+          legend.text = element_markdown(size = 16, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
           panel.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
           plot.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
           legend.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
@@ -332,20 +330,14 @@ function(input, output, session) {
               inputId = paste0(q_id, "_", choice),
               label = choice,
               class = "btn-block survey-btn",
-              onclick = paste0(
-                "Shiny.setInputValue('",
-                q_id,
-                "', '",
-                choice,
-                "', {priority: 'event'});"
-              )
+              onclick = paste0("Shiny.setInputValue('", q_id, "', '", choice, "', {priority: 'event'});")
             )
           }),
           hr()
         )
       }),
-      actionButton("submit_survey", "Submit"),
-      actionButton("skip_btn", "Skip")
+      actionButton("skip_btn", "Skip"),
+      actionButton("submit_survey", "Submit")
     )
   })
 
@@ -401,6 +393,7 @@ function(input, output, session) {
         div(
           h3(question$prompt),
           div(
+            class = "survey-results",
             lapply(question$options, function(option) {
               btn_class <- "disabled"
 
@@ -409,7 +402,7 @@ function(input, output, session) {
               } else if (option == user_answer) {
                 btn_class <- paste(btn_class, "btn-danger")
               } else {
-                btn_class <- paste(btn_class, "btn-outline-warning")
+                btn_class <- paste(btn_class, "btn-outline-secondary")
               }
 
               actionButton(
@@ -432,12 +425,7 @@ function(input, output, session) {
         footer = NULL,
         new_survey_ui,
         h3(
-          paste(
-            "You got",
-            correct_answers,
-            "out of",
-            total_questions,
-            "questions right"
+          paste("You got", correct_answers, "out of", total_questions, "questions right"
           )
         ),
         size = "xl",
@@ -592,7 +580,7 @@ function(input, output, session) {
     
     ## Set the plot y-axis limits
     max_y <- max(conversations_wday_plot_data$n)
-    limits_y <- c(0, ceiling(max_y / 25) * 26)
+    limits_y <- c(0, max_y * 1.1)
 
     ## Create the conversations by weekday plot
     conversations_wday_plot <-
@@ -655,7 +643,7 @@ function(input, output, session) {
       height_svg = 6,
       options = list(
         opts_toolbar(
-          saveaspng = FALSE,
+          saveaspng = TRUE,
           pngname = "conversations_by_weekday",
           hidden = c(
             "lasso_select",
@@ -746,7 +734,7 @@ function(input, output, session) {
       height_svg = 6,
       options = list(
         opts_toolbar(
-          saveaspng = FALSE,
+          saveaspng = TRUE,
           pngname = "tokens_ecdf_distribution",
           hidden = c(
             "lasso_select",
@@ -759,6 +747,103 @@ function(input, output, session) {
         opts_hover(css = "stroke-width: 5pt;"),
         opts_hover_inv(css = "opacity: 0.10;"),
         opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
+      )
+    )
+  })
+
+  # Second Row Plot - Word Bar Chart ----------------------------------
+
+  output$wordPlot <- renderGirafe({
+
+    ## Check `conversations` exists
+    req(conversations())
+
+    ## Get the top words
+    word_bar_plot_data <-
+      conversations() |>
+      select("title") |>
+      unnest_tokens(input = title, output = word) |>
+      anti_join(get_stopwords(), by = join_by("word")) |>
+      count(word) |>
+      slice_max(n = 10, with_ties = FALSE, order_by = n) |>
+      select("word", "n")
+    
+    ## Set the plot y-axis limits
+    max_y <- max(word_bar_plot_data$n)
+    limits_y <- c(0, max_y * 1.1)
+
+    ## Create the conversations by weekday plot
+    word_bar_plot <-
+      word_bar_plot_data |>
+      ggplot(
+        aes(
+          x = fct_inorder(word),
+          y = n,
+          data_id = word
+        )
+      ) +
+      geom_col_interactive(
+        width = 0.5,
+        show.legend = FALSE,
+        fill = "#0a0a0a",
+        colour = "#00ff00"
+      ) +
+      geom_text_interactive(
+        aes(label = n),
+        vjust = 1.9,
+        size = 11 / .pt, 
+        colour = "#00ff00",
+        family = "share"
+      ) +
+      scale_x_discrete(
+        expand = c(0.1, 0, 0.1, 0)
+      ) +
+      scale_y_continuous(
+        expand = c(0, 0),
+        limits = limits_y,
+        breaks = NULL,
+        minor_breaks = NULL,
+        position = "right",
+        labels = label_comma()
+      ) +
+      labs(
+        title = NULL,
+        subtitle = NULL,
+        caption = NULL,
+        x = NULL,
+        y = NULL,
+        colour = NULL
+      ) +
+      theme(
+        axis.text.x = element_markdown(size = 11, colour = "#00ff00", vjust = 1, hjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0), angle = 45),
+        axis.line.x = element_line(colour = "#00ff00"),
+        axis.ticks = element_blank(),
+        axis.ticks.length.x = unit(0, "in"),
+        axis.text.y.right = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+      )
+
+    ## Ouput the girafe() plot that will be passed the render function
+    girafe(
+      ggobj = word_bar_plot,
+      width_svg = 9,
+      height_svg = 6,
+      options = list(
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "top_25_words", 
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
+        opts_hover(css = "stroke-width: 3pt;"),
+        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500)
       )
     )
   })
@@ -920,10 +1005,10 @@ function(input, output, session) {
     req(dataReady())
     
     ## Wait for 0.5s then begin showing each element in order
-    delay(ms = 0, showElement(id = "first_row_boxes_wrapper", anim = TRUE, animType = "fade", time = 2))
-    delay(ms = 1000, showElement(id = "second_row_boxes_wrapper", anim = TRUE, animType = "fade", time = 2))
-    delay(ms = 2000, showElement(id = "first_row_plots_wrapper", anim = TRUE, animType = "fade", time = 2))
-
+    delay(ms = 0,    showElement(id = "first_row_boxes_wrapper", anim = TRUE, animType = "fade", time = 1.5))
+    delay(ms = 1000, showElement(id = "second_row_boxes_wrapper", anim = TRUE, animType = "fade", time = 1.5))
+    delay(ms = 2000, showElement(id = "first_row_plots_wrapper", anim = TRUE, animType = "fade", time = 1.5))
+    delay(ms = 3000, showElement(id = "second_row_plots_wrapper", anim = TRUE, animType = "fade", time = 1.5))
   })
 
 }
