@@ -421,15 +421,10 @@ function(input, output, session) {
     ## Update the modal with the results and continue button
     showModal(
       modalDialog(
-        title = NULL,
-        footer = NULL,
+        title = paste("You got", correct_answers, "out of", total_questions, "questions right"),
         new_survey_ui,
-        h3(
-          paste("You got", correct_answers, "out of", total_questions, "questions right"
-          )
-        ),
-        size = "xl",
-        actionButton("continue_btn", "Continue", class = "btn-primary")
+        footer = actionButton("continue_btn", "Continue", class = "btn-primary"),
+        size = "xl"
       )
     )
   })
@@ -460,7 +455,7 @@ function(input, output, session) {
       modalDialog(
         title = "This survey is auto-generated based on your conversation history with ChatGPT. You can choose to skip it or see how well you know your usage patterns with ChatGPT!",
         uiOutput("survey_ui"),
-        footer = NULL,
+        footer = NULL, 
         size = "xl",
         easyClose = FALSE,
         disabled = "disabled"

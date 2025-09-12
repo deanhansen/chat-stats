@@ -227,3 +227,8 @@ a.ggiraph-toolbar-icon-saveaspng:hover {
 a.ggiraph-toolbar-icon-saveaspng:active {
     transform: scale(0.95);
 }
+
+/* ... */
+.modal-header {
+    border-bottom: 1px solid #00ff00;
+}
