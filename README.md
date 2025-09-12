@@ -21,4 +21,4 @@
 - Minimalist CSS for a matrix inspired aesthetic.
 
 ## Data Privacy
-- All data processing is done locally within the app; your conversation history is never stored or sent to a remote server
+- All data processing is done locally within the app; your data is never stored or sent to a remote server.
