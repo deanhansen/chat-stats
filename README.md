@@ -1,4 +1,4 @@
-# \<start> ChatGPT Conversation History Explorer \</stop>
+# \<sos> ChatGPT Conversation History Explorer \<eos>
 
 ![Preview of the homepage](www/homepage.png)
 
