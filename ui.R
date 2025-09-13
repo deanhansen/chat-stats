@@ -149,6 +149,17 @@ second_row_plots <- list(
 # Shiny UI ---------------------------------------------------------
 
 page_navbar(
+  tags$head(
+    HTML('
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PS2C6ZQNR"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-8PS2C6ZQNR");
+      </script>
+    ')
+  ),
   useShinyjs(),
   id = "selected_tab",
   theme = my_theme,
@@ -166,7 +177,7 @@ page_navbar(
         id = "conversation_history_wrapper",
         file_input,
         tags$div(
-          "To download your conversation history, follow this ",
+          "To download your ChatGPT conversation history, follow this ",
           tags$a(
               href = "https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data",
               target = "_blank",
