@@ -70,6 +70,22 @@ first_row_boxes <- list(
 
 second_row_boxes <- list(
   value_box(
+    title = "When You First Met",
+    value = textOutput("first_conversation_date"),
+    showcase = bs_icon("arrow-through-heart", size = "3rem", class = "matrix-icon"),
+    showcase_layout = "left center",
+    theme = "secondary",
+    class = "matrix-box"
+  ),
+  value_box(
+    title = "Number of Conversations",
+    value = textOutput("total_days"),
+    showcase = bs_icon("calendar-week", size = "3rem", class = "matrix-icon"),
+    showcase_layout = "left center",
+    theme = "secondary",
+    class = "matrix-box"
+  ),
+  value_box(
     title = "Messages Exchanged",
     value = textOutput("total_messages_exchanged"),
     showcase = bs_icon("chat-left-dots", size = "3rem", class = "matrix-icon"),
@@ -78,25 +94,9 @@ second_row_boxes <- list(
     class = "matrix-box"
   ),
   value_box(
-    title = "When You Like to Chat",
-    value = textOutput("favourite_day_of_the_week"),
-    showcase = bs_icon("calendar-week", size = "3rem", class = "matrix-icon"),
-    showcase_layout = "left center",
-    theme = "secondary",
-    class = "matrix-box"
-  ),
-  value_box(
     title = "Avg Tokens Sent (Rec)",
     value = textOutput("average_token_length"),
     showcase = bs_icon("coin", size = "3rem", class = "matrix-icon"),
-    showcase_layout = "left center",
-    theme = "secondary",
-    class = "matrix-box"
-  ),
-  value_box(
-    title = "Days Used in 2025",
-    value = textOutput("percentage_of_days_in_2025"),
-    showcase = bs_icon("arrow-through-heart", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
@@ -126,13 +126,8 @@ first_row_plots <- list(
         "Compare your message lengths with ChatGPT's. Short vs. chatty!"
       )
     ),
-    girafeOutput("distPlot", width = "100%")
-  )
-)
-
-# Second Row Plots ----------------------------------------
-
-second_row_plots <- list(
+    girafeOutput("distPlot")
+  ),
   card(
     class = "matrix-box",
     card_header(
@@ -142,9 +137,25 @@ second_row_plots <- list(
         "What topics you're asking ChatGPT about!"
       )
     ),
-    girafeOutput("wordPlot", width = "100%")
+    girafeOutput("wordPlot")
   )
 )
+
+# Second Row Plots ----------------------------------------
+
+# second_row_plots <- list(
+#   card(
+#     class = "matrix-box",
+#     card_header(
+#       "Now Tell Me, What's On Your Mind",
+#       tooltip(
+#         bs_icon("info-circle", class = "matrix-icon"),
+#         "What topics you're asking ChatGPT about!"
+#       )
+#     ),
+#     girafeOutput("wordPlot", width = "100%")
+#   )
+# )
 
 # Shiny UI ---------------------------------------------------------
 
@@ -185,15 +196,19 @@ page_navbar(
               style = "color: #ffffffff;"
             ),
           )
-        ),
+        )
       ),
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
-      div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_column_wrap(gap = "12px", !!!first_row_boxes)),
-      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_column_wrap(gap = "12px", !!!second_row_boxes)),
-      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_column_wrap(gap = "12px", !!!first_row_plots)),
-      # layout_column_wrap(gap = "12px", !!!second_row_plots)
-      div(id = "second_row_plots_wrapper", style = "display: none;", layout_column_wrap(gap = "12px", !!!second_row_plots))
+      div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6), gap = "12px", !!!first_row_boxes)),
+      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3),gap = "12px", !!!second_row_boxes)),
+      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(4, 4, 4), gap = "12px", !!!first_row_plots)),
+      div(id = "second_row_plots_wrapper", style = "display: none;", 
+      navset_card_underline(
+        title = "Histograms by species",
+        nav_panel("Hour", girafeOutput("hourPlot")),
+        nav_panel("Minute", girafeOutput("minutePlot"))
+      ))
     )
   ),
 

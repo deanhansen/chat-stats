@@ -561,9 +561,247 @@ function(input, output, session) {
     format(n_distinct(conversations()$create_date), big.mark = ",")
   })
 
+  # First Date of Conversation ------------------------------------------
+
+  output$first_conversation_date <- renderText({
+    req(conversations())
+    format(ymd(min(conversations()$create_date, na.rm = TRUE)), "%B %d, %Y")
+  })
+
+  # Second Row Plots - Hour Bar Chart ----------------------------------
+
+  output$hourPlot <- renderGirafe({
+    
+    ## Check `conversations` exists
+    req(conversations())
+
+    ## How many messages the user is sending by hour of the day
+    conversations_hour_plot_data <-  
+      conversations() |>
+      filter(author == "user") |> 
+      mutate(create_time_hour = hour(create_time)) |> 
+      group_by(create_time_hour) |>
+      # reframe(n = n_distinct(chat_id)) |>
+      reframe(n = n()) |>
+      complete(create_time_hour = 0L:23L, fill = list(n = 0)) |> 
+      select(
+        "create_time_hour",
+        "n"
+      )
+    
+    ## Set the plot y-axis limits
+    max_y <- max(conversations_hour_plot_data$n, na.rm = TRUE)
+    limits_y <- c(0, max_y * 1.1)
+
+    ## Create the conversations by weekday plot
+    conversations_hour_plot <-
+      conversations_hour_plot_data |>
+      ggplot(
+        aes(
+          x = create_time_hour,
+          y = n,
+          group = 1,
+          data_id = create_time_hour,
+          tooltip = glue("hour: {create_time_hour}:00, n: {n}")
+        )
+      ) +
+      geom_line(
+        linewidth = 0.75,
+        show.legend = FALSE,
+        colour = "#00ff00",
+        fill = "#00ff00"
+      ) +
+      geom_point(
+        size = 1.75,
+        show.legend = FALSE,
+        colour = "#ffffffff"
+      ) +
+      geom_point_interactive(
+        size = 1.25,
+        show.legend = FALSE,
+        colour = "#00ff00"
+      ) +
+      # geom_text_interactive(
+      #   aes(label = ifelse(n > 10, n, "")),
+      #   vjust = 1.9,
+      #   size = 11 / .pt,
+      #   colour = "#00ff00",
+      #   family = "share"
+      # ) +
+      scale_x_continuous(
+        breaks = seq(0, 23, by = 4),
+        expand = c(0.1, 0, 0.1, 0),
+        labels = label_number(suffix = ":00")
+      ) +
+      scale_y_continuous(
+        expand = c(0, 0),
+        limits = limits_y,
+        minor_breaks = NULL,
+        position = "right",
+        labels = label_comma()
+      ) +
+      labs(
+        title = NULL,
+        subtitle = NULL,
+        caption = NULL,
+        x = NULL,
+        y = NULL,
+        colour = NULL
+      ) +
+      theme(
+        axis.line.x = element_line(colour = "#00ff00"),
+        axis.ticks = element_blank(), 
+        axis.ticks.length.x = unit(0, "in"),
+        axis.text.y.right = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank()
+      )
+
+    ## Ouput the girafe() plot that will be passed the render function
+    girafe(
+      ggobj = conversations_hour_plot,
+      width_svg = 9,
+      height_svg = 6,
+      options = list(
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "conversations_by_hour",
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
+        opts_hover(css = "stroke-width: 2pt;"),
+        opts_hover_inv(css = NULL),
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
+      )
+    )
+  })
+
+  # Second Row Plots - Minute Bar Chart ----------------------------------
+
+  output$minutePlot <- renderGirafe({
+    
+    ## Check `conversations` exists
+    req(conversations())
+
+    ## How many messages the user is sending by hour of the day
+    conversations_minute_plot_data <-  
+      conversations() |>
+      filter(author == "user") |> 
+      mutate(create_time_minute = minute(create_time)) |> 
+      group_by(create_time_minute) |>
+      # reframe(n = n_distinct(chat_id)) |>
+      reframe(n = n()) |>
+      complete(create_time_minute = 0L:59L, fill = list(n = 0)) |> 
+      select(
+        "create_time_minute",
+        "n"
+      )
+    
+    ## Set the plot y-axis limits
+    max_y <- max(conversations_minute_plot_data$n, na.rm = TRUE)
+    limits_y <- c(0, max_y * 1.1)
+
+    ## Create the conversations by minute plot
+    conversations_minute_plot <-
+      conversations_minute_plot_data |>
+      ggplot(
+        aes(
+          x = create_time_minute,
+          y = n,
+          group = 1,
+          data_id = create_time_minute,
+          tooltip = glue("minute: {create_time_minute}, n: {n}")
+        )
+      ) +
+      geom_line(
+        linewidth = 0.5,
+        show.legend = FALSE,
+        colour = "#00ff00",
+        fill = "#00ff00"
+      ) +
+      geom_point(
+        size = 1.25,
+        show.legend = FALSE,
+        colour = "#ffffffff"
+      ) +
+      geom_point_interactive(
+        size = 1,
+        show.legend = FALSE,
+        colour = "#00ff00"
+      ) +
+      # geom_text_interactive(
+      #   aes(label = ifelse(n > 10, n, "")),
+      #   vjust = 1.9,
+      #   size = 11 / .pt,
+      #   colour = "#00ff00",
+      #   family = "share"
+      # ) +
+      scale_x_continuous(
+        breaks = seq(0, 59, by = 5),
+        expand = c(0.1, 0, 0.1, 0),
+        labels = label_number()
+      ) +
+      scale_y_continuous(
+        expand = c(0, 0),
+        limits = limits_y,
+        minor_breaks = NULL,
+        position = "right",
+        labels = label_comma()
+      ) +
+      labs(
+        title = NULL,
+        subtitle = NULL,
+        caption = NULL,
+        x = NULL,
+        y = NULL,
+        colour = NULL
+      ) +
+      theme(
+        axis.line.x = element_line(colour = "#00ff00"),
+        axis.ticks = element_blank(), 
+        axis.ticks.length.x = unit(0, "in"),
+        axis.text.y.right = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank()
+      )
+
+    ## Ouput the girafe() plot that will be passed the render function
+    girafe(
+      ggobj = conversations_minute_plot,
+      width_svg = 9,
+      height_svg = 6,
+      options = list(
+        opts_toolbar(
+          saveaspng = TRUE,
+          pngname = "conversations_by_minute",
+          hidden = c(
+            "lasso_select",
+            "lasso_deselect",
+            "zoom_onoff",
+            "zoom_rect",
+            "zoom_reset"
+          )
+        ),
+        opts_hover(css = "stroke-width: 2pt;"),
+        opts_hover_inv(css = NULL),
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
+      )
+    )
+  })
+
   # First Row Plots - Weekday Bar Chart ----------------------------------
 
   output$wdayPlot <- renderGirafe({
+    
     ## Check `conversations` exists
     req(conversations())
 
@@ -672,7 +910,7 @@ function(input, output, session) {
           )
         ),
         opts_hover(css = "stroke-width: 5pt;"),
-        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_hover_inv(css = NULL),
         opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
       )
     )
@@ -763,7 +1001,7 @@ function(input, output, session) {
           )
         ),
         opts_hover(css = "stroke-width: 5pt;"),
-        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_hover_inv(css = NULL),
         opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
       )
     )
@@ -860,7 +1098,7 @@ function(input, output, session) {
           )
         ),
         opts_hover(css = "stroke-width: 3pt;"),
-        opts_hover_inv(css = "opacity: 0.10;"),
+        opts_hover_inv(css = NULL),
         opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500)
       )
     )
