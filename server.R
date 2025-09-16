@@ -1,99 +1,3 @@
-# Allow up to 50MB files -------------------------------------------------
-
-options(shiny.maxRequestSize = 50 * 1024^2)
-
-# Packages ---------------------------------------------------------------
-
-suppressMessages(
-  suppressMessages(
-    suppressWarnings({
-
-      ## Data cleaning and transformation
-      library(jsonlite)
-      library(readr)
-      library(dplyr)
-      library(tidyr)
-      library(stringr)
-      library(lubridate)
-      library(purrr)
-      library(forcats)
-      library(glue)
-
-      ## Creating and styling plots
-      library(ggplot2)
-      library(scales)
-      library(ggiraph)
-      # library(ggwordcloud)
-      library(showtext)
-      library(ggtext)
-
-      ## Text cleanup
-      library(tidytext)
-      library(stopwords)
-
-      ## Load tiktoken (GPT-3.5 and GPT-4.5 tokenizer)
-      library(reticulate)
-
-      ## Add fonts for the plots
-      font_add_google(name = "Share Tech Mono", family = "share")
-
-      ## Set the font resolution
-      showtext_auto()
-      showtext_opts(dpi = 300)
-
-      ## Set the theme for all plots
-      theme_set(
-        theme(
-          text = element_text(family = "share", colour = "#00ff00"),
-          axis.text.x = element_markdown(size = 16, colour = "#00ff00", vjust = 0, margin = margin(t = 12, r = 0, b = 8, l = 0)),
-          axis.text.y.right = element_markdown(size = 16, colour = "#00ff00", hjust = 0, margin = margin(t = 0, r = 8, b = 0, l = 12)),
-          legend.text = element_markdown(size = 16, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
-          panel.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
-          plot.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
-          legend.background = element_rect(fill = "#0a0a0a", colour = "#0a0a0a"),
-          panel.grid = element_line(colour = "#00ff00", linewidth = 0.5),
-          axis.line.x = element_line(colour = "#00ff00", linewidth = 0.5),
-          axis.ticks.length = unit(0, "in"),
-          axis.ticks.x = element_line(linewidth = 0.5),
-          axis.ticks.y = element_line(linewidth = 0.5),
-          legend.key.height = unit(0.45, "in"),
-          legend.key.width = unit(0.6, "in"),
-          legend.key = element_rect(fill = "#0a0a0a", color = NA),
-          legend.key.size = unit(0.8, "lines"),
-          legend.spacing.x = unit(0.3, "cm"),
-          legend.position = "top"
-        )
-      )
-
-      ## Load Python module
-      tiktoken <- import("tiktoken")
-
-      ## Load tokenizer
-      enc <- tiktoken$get_encoding("cl100k_base")
-      
-    })
-  )
-)
-
-# Generate Survey Options ------------------------------------------------
-
-generate_survey_options <- function(true_val, n = 50, choose = 3) {
-  offsets <- runif(n, min = -0.4, max = 0.2)
-  options <- round(true_val * (1 + offsets))
-  options <- unique(options[options > 0 & !is.na(options)])
-  
-  if (length(options) < choose) {
-    extra <- round(true_val * (1 + runif(choose - length(options), -0.3, 0.3)))
-    extra <- extra[extra > 0]
-    options <- unique(c(options, extra))
-  }
-  
-  options <- unique(c(options, true_val))  
-  chosen <- sample(options, min(choose, length(options)), replace = FALSE)  
-  all_opts <- unique(c(chosen, true_val))
-  format(sort(all_opts), big.mark = ",")
-}
-
 # Shiny Server -----------------------------------------------------------
 
 function(input, output, session) {
@@ -101,14 +5,12 @@ function(input, output, session) {
   ## Set of reactive values that we'll update as the user interacts with the app
   conversations <- reactiveVal()
   survey_status <- reactiveVal(value = FALSE)
-
-  ## A reactive value to track which questions have been answered
-  answered_questions <- reactiveVal(character(0))
+  answered_questions <- reactiveVal(value = character(0))
 
   ## Observe all survey inputs to see which questions have been answered
   observe({
 
-    ## ...
+    ## Set a reactive value with survey questions
     questions <- survey_questions()
     
     ## Check if questions() is ready before setting up observers
@@ -565,7 +467,7 @@ function(input, output, session) {
 
   output$first_conversation_date <- renderText({
     req(conversations())
-    format(ymd(min(conversations()$create_date, na.rm = TRUE)), "%B %d, %Y")
+    format(ymd(min(conversations()$create_date, na.rm = TRUE)), "%b %d, %Y")
   })
 
   # Second Row Plots - Hour Bar Chart ----------------------------------
@@ -602,34 +504,32 @@ function(input, output, session) {
           y = n,
           group = 1,
           data_id = create_time_hour,
-          tooltip = glue("hour: {create_time_hour}:00, n: {n}")
+          tooltip = glue("{create_time_hour}:00 ({n})")
         )
       ) +
       geom_line(
-        linewidth = 0.75,
+        linewidth = 0.75, 
         show.legend = FALSE,
         colour = "#00ff00",
         fill = "#00ff00"
       ) +
       geom_point(
-        size = 1.75,
+        size = 2.75,
         show.legend = FALSE,
         colour = "#ffffffff"
       ) +
       geom_point_interactive(
-        size = 1.25,
+        size = 2.25,
         show.legend = FALSE,
         colour = "#00ff00"
       ) +
-      # geom_text_interactive(
-      #   aes(label = ifelse(n > 10, n, "")),
-      #   vjust = 1.9,
-      #   size = 11 / .pt,
-      #   colour = "#00ff00",
-      #   family = "share"
-      # ) +
+      geom_area(
+        fill = "#00ff00",
+        alpha = 0.04
+      ) +
       scale_x_continuous(
         breaks = seq(0, 23, by = 4),
+        minor_breaks = seq(0, 23, by = 1),
         expand = c(0.1, 0, 0.1, 0),
         labels = label_number(suffix = ":00")
       ) +
@@ -639,6 +539,10 @@ function(input, output, session) {
         minor_breaks = NULL,
         position = "right",
         labels = label_comma()
+      ) + 
+      guides(
+        x = guide_axis(minor.ticks = TRUE),
+        y = guide_axis(minor.ticks = FALSE)
       ) +
       labs(
         title = NULL,
@@ -649,14 +553,10 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks = element_blank(), 
-        axis.ticks.length.x = unit(0, "in"),
+        panel.grid = element_blank(),
         axis.text.y.right = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank()
+        axis.minor.ticks.length.x.bottom = unit(0.06, "in"),
+        axis.ticks.y = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -717,7 +617,7 @@ function(input, output, session) {
           y = n,
           group = 1,
           data_id = create_time_minute,
-          tooltip = glue("minute: {create_time_minute}, n: {n}")
+          tooltip = glue("{create_time_minute} ({n})")
         )
       ) +
       geom_line(
@@ -727,26 +627,23 @@ function(input, output, session) {
         fill = "#00ff00"
       ) +
       geom_point(
-        size = 1.25,
+        size = 2,
         show.legend = FALSE,
-        colour = "#ffffffff"
+        colour = "#fff"
       ) +
       geom_point_interactive(
-        size = 1,
+        size = 1.6,
         show.legend = FALSE,
         colour = "#00ff00"
       ) +
-      # geom_text_interactive(
-      #   aes(label = ifelse(n > 10, n, "")),
-      #   vjust = 1.9,
-      #   size = 11 / .pt,
-      #   colour = "#00ff00",
-      #   family = "share"
-      # ) +
+      geom_area(
+        fill = "#00ff00",
+        alpha = 0.04
+      ) +
       scale_x_continuous(
-        breaks = seq(0, 59, by = 5),
-        expand = c(0.1, 0, 0.1, 0),
-        labels = label_number()
+        breaks = seq(0, 59, by = 10),
+        minor_breaks = seq(1, 59, by = 1),
+        expand = c(0.1, 0, 0.1, 0)
       ) +
       scale_y_continuous(
         expand = c(0, 0),
@@ -754,6 +651,10 @@ function(input, output, session) {
         minor_breaks = NULL,
         position = "right",
         labels = label_comma()
+      ) +
+      guides(
+        x = guide_axis(minor.ticks = TRUE),
+        y = guide_axis(minor.ticks = FALSE)
       ) +
       labs(
         title = NULL,
@@ -764,14 +665,10 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks = element_blank(), 
-        axis.ticks.length.x = unit(0, "in"),
+        panel.grid = element_blank(),
         axis.text.y.right = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank()
+        axis.minor.ticks.length.x.bottom = unit(0.06, "in"),
+        axis.ticks.y = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -819,19 +716,16 @@ function(input, output, session) {
     ## Get the ranks based on the highest average at the end
     conversations_wday_plot_data <-  
       conversations() |>
+      filter(author == "user") |> 
       group_by(create_time_wday) |>
-      reframe(n = n_distinct(chat_id)) |>
+      reframe(n = n()) |>
       mutate(
-        create_time_wday_label = factor(x = create_time_wday, labels = x_axis_labels),
-        fill = if_else(create_time_wday < 6, "#0a0a0a", "#0a0a0a"),
-        colour = if_else(create_time_wday < 6, "#00ff00", "#00ff00")
+        create_time_wday_label = factor(x = create_time_wday, labels = x_axis_labels)
       ) |>
       select(
         "create_time_wday",
         "create_time_wday_label",
-        "n",
-        "fill",
-        "colour"
+        "n"
       )
     
     ## Set the plot y-axis limits
@@ -845,21 +739,30 @@ function(input, output, session) {
         aes(
           x = create_time_wday_label,
           y = n,
-          colour = colour,
-          fill = fill,
-          data_id = create_time_wday_label
+          group = 1,
+          data_id = create_time_wday_label,
+          tooltip = glue("{create_time_wday_label} ({label_comma()(n)})")
         )
       ) +
-      geom_col_interactive(
-        width = 0.5,
-        show.legend = FALSE
-      ) +
-      geom_text_interactive(
-        aes(label = n),
-        vjust = 1.9,
-        size = 18 / .pt,
+      geom_line(
+        linewidth = 1,
+        show.legend = FALSE,
         colour = "#00ff00",
-        family = "share"
+        fill = "#00ff00"
+      ) +
+      geom_point(
+        size = 5,
+        show.legend = FALSE,
+        colour = "#fff"
+      ) +
+      geom_point_interactive(
+        size = 4,
+        show.legend = FALSE,
+        colour = "#00ff00"
+      ) +
+      geom_area(
+        fill = "#00ff00",
+        alpha = 0.04
       ) +
       scale_x_discrete(
         expand = c(0.1, 0, 0.1, 0)
@@ -883,8 +786,10 @@ function(input, output, session) {
       ) +
       theme(
         axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks = element_blank(), 
-        axis.ticks.length.x = unit(0, "in"),
+        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
+        axis.ticks.length.x = unit(0.15, "in"),
+        axis.ticks.y = element_blank(),
+        axis.ticks.length.y = unit(0, "in"),
         axis.text.y.right = element_blank(),
         panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -911,7 +816,7 @@ function(input, output, session) {
         ),
         opts_hover(css = "stroke-width: 5pt;"),
         opts_hover_inv(css = NULL),
-        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
+        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
       )
     )
   })
@@ -953,11 +858,12 @@ function(input, output, session) {
       geom_step_interactive(
         aes(y = after_stat(y), group = author),
         stat = "ecdf",
-        size = 1.5
+        linewidth = 1.5
       ) +
       scale_x_continuous(
-        labels = label_comma(big.mark = ",", suffix = " tokens"),
+        labels = label_comma(big.mark = ",", suffix = " tkns"),
         limits = limits_x,
+        breaks = seq(limits_x[1], limits_x[2], by = 500),
         expand = c(0, 0, 0, 0)
       ) +
       scale_y_continuous(
@@ -968,7 +874,7 @@ function(input, output, session) {
         expand = c(0, 0)
       ) +
       scale_colour_manual(
-        values = c("You" = "#ffd23f", "ChatGPT" = "#0091d4ff")
+        values = c("You" = "#ff80fbab", "ChatGPT" = "#ffffffab")
       ) +
       labs(
         title = NULL,
@@ -978,6 +884,13 @@ function(input, output, session) {
         color = NULL
       ) +
       theme(
+        axis.text.x = element_markdown(size = 13, colour = "#00ff00", vjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0)),
+        axis.text.y.right = element_markdown(size = 13, colour = "#00ff00", hjust = 1, margin = margin(t = 0, r = 4, b = 0, l = 8)),
+        legend.text = element_markdown(size = 13, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
+        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
+        # axis.ticks.length.x = unit(0.1, "in"),
+        axis.ticks.y = element_blank(),
+        axis.ticks.length.y = unit(0, "in"),
         panel.grid.minor.x = element_blank(),
         panel.grid.minor.y = element_blank(),
         plot.margin = unit(c(5, 35, 5, 55), "pt")
@@ -1022,6 +935,7 @@ function(input, output, session) {
       anti_join(get_stopwords(), by = join_by("word")) |>
       count(word) |>
       slice_max(n = 10, with_ties = FALSE, order_by = n) |>
+      mutate(word = str_trunc(word, width = 16)) |> 
       select("word", "n")
     
     ## Set the plot y-axis limits
@@ -1035,19 +949,29 @@ function(input, output, session) {
         aes(
           x = fct_inorder(word),
           y = n,
-          data_id = word
+          data_id = word,
+          tooltip = glue("{word} ({label_comma()(n)})")
         )
       ) +
-      geom_col_interactive(
-        width = 0.5,
-        show.legend = FALSE,
-        fill = "#0a0a0a",
+      geom_segment(
+        aes(y = 0, yend = n),
+        linewidth = 0.75,
         colour = "#00ff00"
       ) +
-      geom_text_interactive(
-        aes(label = n),
-        vjust = 1.9,
-        size = 11 / .pt, 
+      geom_point(
+        size = 5,
+        show.legend = FALSE,
+        colour = "#fff"
+      ) +
+      geom_point_interactive(
+        size = 4,
+        show.legend = FALSE,
+        colour = "#00ff00"
+      ) +
+      geom_text(
+        aes(label = label_comma()(n)),
+        vjust = -1.2,
+        size = 13 / .pt, 
         colour = "#00ff00",
         family = "share"
       ) +
@@ -1071,10 +995,12 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.text.x = element_markdown(size = 11, colour = "#00ff00", vjust = 1, hjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0), angle = 45),
+        axis.text.x = element_markdown(size = 13, colour = "#00ff00", vjust = 1, hjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0), angle = 45),
         axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks = element_blank(),
-        axis.ticks.length.x = unit(0, "in"),
+        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
+        axis.ticks.length.x = unit(0.15, "in"),
+        axis.ticks.y = element_blank(),
+        axis.ticks.length.y = unit(0, "in"),
         axis.text.y.right = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()

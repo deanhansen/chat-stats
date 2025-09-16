@@ -1,20 +1,4 @@
-# Packages ----------------------------------------
-
-suppressMessages(
-  suppressWarnings({
-    library(shiny)
-    library(shinyjs)
-    library(bslib)
-    library(ggiraph)
-    library(bsicons)
-    library(DT)
-    library(rlang)
-    library(showtext)
-    library(sysfonts)
-  })
-)
-
-# Theme ---------------------------------------------
+# Theme ------------------------------------------------------------------
 
 my_theme <- bs_theme(
   version = 5,
@@ -28,7 +12,7 @@ my_theme <- bs_theme(
   base_font = font_google("Share Tech Mono")
 )
 
-# File Input ----------------------------------------
+# File Input -------------------------------------------------------------
 
 file_input <- fileInput(
   inputId = "conversation_history",
@@ -39,7 +23,7 @@ file_input <- fileInput(
   width = "100%"
 )
 
-# Top Row Boxes ----------------------------------------
+# Top Row Boxes ----------------------------------------------------------
 
 first_row_boxes <- list(
   value_box(
@@ -66,21 +50,21 @@ first_row_boxes <- list(
   )
 )
 
-# Second Row Boxes ----------------------------------------
+# Second Row Boxes -------------------------------------------------------
 
 second_row_boxes <- list(
   value_box(
     title = "When You First Met",
     value = textOutput("first_conversation_date"),
-    showcase = bs_icon("arrow-through-heart", size = "3rem", class = "matrix-icon"),
+    showcase = bs_icon("heart", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
   ),
   value_box(
-    title = "Number of Conversations",
+    title = "Total Conversations",
     value = textOutput("total_days"),
-    showcase = bs_icon("calendar-week", size = "3rem", class = "matrix-icon"),
+    showcase = bs_icon("chat-left-dots", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
@@ -88,46 +72,24 @@ second_row_boxes <- list(
   value_box(
     title = "Messages Exchanged",
     value = textOutput("total_messages_exchanged"),
-    showcase = bs_icon("chat-left-dots", size = "3rem", class = "matrix-icon"),
+    showcase = bs_icon("arrow-left-right", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
   ),
   value_box(
-    title = "Avg Tokens Sent (Rec)",
+    title = "Average Tokens Sent (Rec)",
     value = textOutput("average_token_length"),
-    showcase = bs_icon("coin", size = "3rem", class = "matrix-icon"),
+    showcase = bs_icon("cup-hot", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
   )
 )
 
-# First Row Plots ----------------------------------------
+# First Row Plots --------------------------------------------------------
 
 first_row_plots <- list(
-  card(
-    class = "matrix-box",
-    card_header(
-      "You Say Goodbye, And I Say Hello",
-      tooltip(
-        bs_icon("info-circle", class = "matrix-icon"),
-        "The number of separate conversations started by day of the week."
-      )
-    ),
-    girafeOutput("wdayPlot", width = "100%")
-  ),
-  card(
-    class = "matrix-box",
-    card_header(
-      "Chatty, Aren't Chya",
-      tooltip(
-        bs_icon("info-circle", class = "matrix-icon"),
-        "Compare your message lengths with ChatGPT's. Short vs. chatty!"
-      )
-    ),
-    girafeOutput("distPlot")
-  ),
   card(
     class = "matrix-box",
     card_header(
@@ -138,10 +100,32 @@ first_row_plots <- list(
       )
     ),
     girafeOutput("wordPlot")
+  ),
+  # card(
+  #   class = "matrix-box",
+  #   card_header(
+  #     "You Say Goodbye, And I Say Hello",
+  #     tooltip(
+  #       bs_icon("info-circle", class = "matrix-icon"),
+  #       "The number of separate conversations started by day of the week."
+  #     )
+  #   ),
+  #   girafeOutput("wdayPlot", width = "100%")
+  # ),
+  card(
+    class = "matrix-box",
+    card_header(
+      "Chatty, Aren't Chya",
+      tooltip(
+        bs_icon("info-circle", class = "matrix-icon"),
+        "Compare your message lengths with ChatGPT's. Short vs. chatty!"
+      )
+    ),
+    girafeOutput("distPlot")
   )
 )
 
-# Second Row Plots ----------------------------------------
+# Second Row Plots -------------------------------------------------------
 
 # second_row_plots <- list(
 #   card(
@@ -157,20 +141,9 @@ first_row_plots <- list(
 #   )
 # )
 
-# Shiny UI ---------------------------------------------------------
+# Shiny UI ---------------------------------------------------------------
 
 page_navbar(
-  tags$head(
-    HTML('
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PS2C6ZQNR"></script>
-      <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag("js", new Date());
-        gtag("config", "G-8PS2C6ZQNR");
-      </script>
-    ')
-  ),
   useShinyjs(),
   id = "selected_tab",
   theme = my_theme,
@@ -193,22 +166,34 @@ page_navbar(
               href = "https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data",
               target = "_blank",
               "link",
-              style = "color: #ffffffff;"
+              style = "color: #00ff00;"
             ),
           )
         )
       ),
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
-      div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6), gap = "12px", !!!first_row_boxes)),
-      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3),gap = "12px", !!!second_row_boxes)),
-      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(4, 4, 4), gap = "12px", !!!first_row_plots)),
-      div(id = "second_row_plots_wrapper", style = "display: none;", 
-      navset_card_underline(
-        title = "Histograms by species",
-        nav_panel("Hour", girafeOutput("hourPlot")),
-        nav_panel("Minute", girafeOutput("minutePlot"))
-      ))
+      div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_boxes)),
+      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3), gap = "12px", !!!second_row_boxes)),
+      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_plots)),
+      div(id = "second_row_plots_wrapper", style = "display: none;",
+        layout_columns(
+          col_widths = c(-3, 6, -3),
+          gap = "12px",
+          navset_card_underline(
+            title = tagList(
+              "You Say Goodbye, And I Say Hello",
+              tooltip(
+                bs_icon("info-circle", class = "matrix-icon"),
+                "Total messages sent to ChatGPT by weekday, hour of the day and minute."
+              )
+            ),
+            nav_panel("Weekday", girafeOutput("wdayPlot")),
+            nav_panel("Hour", girafeOutput("hourPlot")),
+            nav_panel("Minute", girafeOutput("minutePlot"))
+          )
+        )
+      )
     )
   ),
 
@@ -227,19 +212,29 @@ page_navbar(
   ),
 
   # Navbar - GitHub Icon -------------------------------------------------
+  # nav_item(
+  # tags$li(
+  #   class = "nav-item",
+  #   tags$a(
+  #     href   = "https://open.spotify.com/playlist/1ajovwTqrfeMBiytNq2Yrg?si=07eda3c58ae542a5",
+  #     target = "_blank",
+  #     title  = "Matrix (1999) Official Soundtrack",
+  #     class  = "nav-link",
+  #     style  = "margin-left: -1rem;",
+  #     "Some Inspiration"
+  #     )
+  #   )
+  # ),
   nav_item(
-  tags$li(
-    class = "nav-item",
     tags$a(
-      href   = "https://open.spotify.com/playlist/1ajovwTqrfeMBiytNq2Yrg?si=07eda3c58ae542a5",
-      target = "_blank",
+      href = "https://open.spotify.com/playlist/1ajovwTqrfeMBiytNq2Yrg?si=07eda3c58ae542a5",
+      target = "_blank", 
       title  = "Matrix (1999) Official Soundtrack",
-      class  = "nav-link",
-      style  = "margin-left: -1rem;",
-      "Some Inspiration"
-    )
-  )
-),
+      onclick = "return confirm('This will take you to a Spotify playlist. Do you want to open this link?');",
+      bs_icon(name = "sunglasses", size = "1.5rem", class = "matrix-icon")
+    ),
+    class = "sunglasses"
+  ),
   nav_spacer(),
   nav_item(
     tags$a(
@@ -250,9 +245,23 @@ page_navbar(
     )
   ),
 
+  ## Google analytics
+  tags$head(
+    HTML('
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-8PS2C6ZQNR"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-8PS2C6ZQNR");
+      </script>
+    ')
+  ),
+
   # CSS ------------------------------------------------------------------
   includeCSS("www/styles.css"),
 
   # JavaScript -----------------------------------------------------------
   includeScript("www/survey_btn.js")
+
 )
