@@ -56,10 +56,11 @@ suppressMessages(
           text = element_text(family = "share", colour = "#00ff00"),
           axis.text.x = element_markdown(size = 13, colour = "#00ff00", vjust = 0, margin = margin(t = 12, r = 0, b = 8, l = 0)),
           axis.text.y.right = element_markdown(size = 13, colour = "#00ff00", hjust = 0, margin = margin(t = 0, r = 8, b = 0, l = 12)),
-          
+          legend.text = element_markdown(size = 13, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 6)),
+
           ## Axis line's
           axis.line.x = element_line(colour = "#00ff00", linewidth = 0.5),
-          axis.line.y = element_blank(),
+          axis.line.y = element_line(colour = "#00ff00", linewidth = 0.5),
 
           ## Ticks
           axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),

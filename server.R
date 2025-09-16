@@ -1,5 +1,3 @@
-# Shiny Server -----------------------------------------------------------
-
 function(input, output, session) {
 
   ## Set of reactive values that we'll update as the user interacts with the app
@@ -510,8 +508,7 @@ function(input, output, session) {
       geom_line(
         linewidth = 0.75, 
         show.legend = FALSE,
-        colour = "#00ff00",
-        fill = "#00ff00"
+        colour = "#00ff00"
       ) +
       geom_point(
         size = 2.75,
@@ -555,7 +552,7 @@ function(input, output, session) {
       theme(
         panel.grid = element_blank(),
         axis.text.y.right = element_blank(),
-        axis.minor.ticks.length.x.bottom = unit(0.06, "in"),
+        axis.minor.ticks.length.x.bottom = unit(0.08, "in"),
         axis.ticks.y = element_blank()
       )
 
@@ -623,8 +620,7 @@ function(input, output, session) {
       geom_line(
         linewidth = 0.5,
         show.legend = FALSE,
-        colour = "#00ff00",
-        fill = "#00ff00"
+        colour = "#00ff00"
       ) +
       geom_point(
         size = 2,
@@ -667,7 +663,7 @@ function(input, output, session) {
       theme(
         panel.grid = element_blank(),
         axis.text.y.right = element_blank(),
-        axis.minor.ticks.length.x.bottom = unit(0.06, "in"),
+        axis.minor.ticks.length.x.bottom = unit(0.08, "in"),
         axis.ticks.y = element_blank()
       )
 
@@ -747,8 +743,7 @@ function(input, output, session) {
       geom_line(
         linewidth = 1,
         show.legend = FALSE,
-        colour = "#00ff00",
-        fill = "#00ff00"
+        colour = "#00ff00"
       ) +
       geom_point(
         size = 5,
@@ -774,8 +769,6 @@ function(input, output, session) {
         position = "right",
         labels = label_comma()
       ) +
-      scale_fill_identity() +
-      scale_colour_identity() +
       labs(
         title = NULL,
         subtitle = NULL,
@@ -785,16 +778,9 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
-        axis.ticks.length.x = unit(0.15, "in"),
         axis.ticks.y = element_blank(),
-        axis.ticks.length.y = unit(0, "in"),
         axis.text.y.right = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank()
+        panel.grid = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -884,15 +870,8 @@ function(input, output, session) {
         color = NULL
       ) +
       theme(
-        axis.text.x = element_markdown(size = 13, colour = "#00ff00", vjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0)),
-        axis.text.y.right = element_markdown(size = 13, colour = "#00ff00", hjust = 1, margin = margin(t = 0, r = 4, b = 0, l = 8)),
-        legend.text = element_markdown(size = 13, colour = "#fff", margin = margin(t = 0, r = 0, b = 0, l = 5)),
-        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
-        # axis.ticks.length.x = unit(0.1, "in"),
         axis.ticks.y = element_blank(),
-        axis.ticks.length.y = unit(0, "in"),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
+        panel.grid = element_blank(),
         plot.margin = unit(c(5, 35, 5, 55), "pt")
       )
 
@@ -995,12 +974,7 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.text.x = element_markdown(size = 13, colour = "#00ff00", vjust = 1, hjust = 1, margin = margin(t = 4, r = 0, b = 8, l = 0), angle = 45),
-        axis.line.x = element_line(colour = "#00ff00"),
-        axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
-        axis.ticks.length.x = unit(0.15, "in"),
         axis.ticks.y = element_blank(),
-        axis.ticks.length.y = unit(0, "in"),
         axis.text.y.right = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()

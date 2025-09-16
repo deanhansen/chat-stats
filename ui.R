@@ -173,11 +173,11 @@ page_navbar(
       ),
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
-      div(id = "first_row_boxes_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_boxes)),
+      div(id = "first_row_boxes_wrapper",   style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_boxes)),
       div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3), gap = "12px", !!!second_row_boxes)),
       div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_plots)),
       div(id = "second_row_plots_wrapper", style = "display: none;",
-        layout_columns(
+        layout_columns(class = "matrix-box-plot",
           col_widths = c(-3, 6, -3),
           gap = "12px",
           navset_card_underline(
