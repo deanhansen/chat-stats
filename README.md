@@ -1,4 +1,4 @@
-# ChatGPT Conversation History Explorer <img src="www/reeves.png" width="40" height="40" alt="keanu reeves" align="right"> <img src="www/shiny_hex.png" width="40" height="40" alt="shiny hex logo" align="right"> <img src="www/ggplot2_hex.png" width="40" height="40" alt="ggplot2 hex logo" align="right"> <img src="www/tidyverse_hex.png" width="40" height="40" alt="tidyverse hex logo" align="right">
+# ChatGPT Conversation History Explorer <img src="www/shiny_hex.png" width="40" height="40" alt="shiny hex logo" align="right"> <img src="www/ggplot2_hex.png" width="40" height="40" alt="ggplot2 hex logo" align="right"> <img src="www/tidyverse_hex.png" width="40" height="40" alt="tidyverse hex logo" align="right">
 
 ![Preview of the homepage](www/homepage.png)
 
