@@ -32,9 +32,6 @@ suppressMessages(
       library(ggiraph)
       library(showtext)
       library(ggtext)
-      library(ggprism)
-      library(ggdist)
-      library(ggbeeswarm)
 
       ## Text cleanup
       library(tidytext)
