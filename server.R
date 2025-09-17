@@ -1,3 +1,7 @@
+source("global.R")
+
+# Server function --------------------------------------------------------
+
 function(input, output, session) {
 
   ## Set of reactive values that we'll update as the user interacts with the app
@@ -461,14 +465,14 @@ function(input, output, session) {
     format(n_distinct(conversations()$create_date), big.mark = ",")
   })
 
-  # First Date of Conversation ------------------------------------------
+  # Date of first conversation -------------------------------------------
 
   output$first_conversation_date <- renderText({
     req(conversations())
     format(ymd(min(conversations()$create_date, na.rm = TRUE)), "%b %d, %Y")
   })
 
-  # Second Row Plots - Hour Bar Chart ----------------------------------
+  # Second Row Plots - Hour Bar Chart ------------------------------------
 
   output$hourPlot <- renderGirafe({
     
@@ -551,9 +555,11 @@ function(input, output, session) {
       ) +
       theme(
         panel.grid = element_blank(),
-        axis.text.y.right = element_blank(),
         axis.minor.ticks.length.x.bottom = unit(0.08, "in"),
-        axis.ticks.y = element_blank()
+        axis.line.y = element_blank(),
+        axis.ticks.y.right = element_blank(),
+        axis.text.y.right = element_blank(),
+        axis.minor.ticks.y.right = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -573,125 +579,126 @@ function(input, output, session) {
             "zoom_reset"
           )
         ),
-        opts_hover(css = "stroke-width: 2pt;"),
+        opts_hover(css = "stroke-width: 4pt;"),
         opts_hover_inv(css = NULL),
-        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
+        opts_tooltip(opacity = 0.80, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
       )
     )
   })
 
   # Second Row Plots - Minute Bar Chart ----------------------------------
 
-  output$minutePlot <- renderGirafe({
+  # output$minutePlot <- renderGirafe({
     
-    ## Check `conversations` exists
-    req(conversations())
+  #   ## Check `conversations` exists
+  #   req(conversations())
 
-    ## How many messages the user is sending by hour of the day
-    conversations_minute_plot_data <-  
-      conversations() |>
-      filter(author == "user") |> 
-      mutate(create_time_minute = minute(create_time)) |> 
-      group_by(create_time_minute) |>
-      # reframe(n = n_distinct(chat_id)) |>
-      reframe(n = n()) |>
-      complete(create_time_minute = 0L:59L, fill = list(n = 0)) |> 
-      select(
-        "create_time_minute",
-        "n"
-      )
+  #   ## How many messages the user is sending by hour of the day
+  #   conversations_minute_plot_data <-  
+  #     conversations() |>
+  #     filter(author == "user") |> 
+  #     mutate(create_time_minute = minute(create_time)) |> 
+  #     group_by(create_time_minute) |>
+  #     # reframe(n = n_distinct(chat_id)) |>
+  #     reframe(n = n()) |>
+  #     complete(create_time_minute = 0L:59L, fill = list(n = 0)) |> 
+  #     select(
+  #       "create_time_minute",
+  #       "n"
+  #     )
     
-    ## Set the plot y-axis limits
-    max_y <- max(conversations_minute_plot_data$n, na.rm = TRUE)
-    limits_y <- c(0, max_y * 1.1)
+  #   ## Set the plot y-axis limits
+  #   max_y <- max(conversations_minute_plot_data$n, na.rm = TRUE)
+  #   limits_y <- c(0, max_y * 1.1)
 
-    ## Create the conversations by minute plot
-    conversations_minute_plot <-
-      conversations_minute_plot_data |>
-      ggplot(
-        aes(
-          x = create_time_minute,
-          y = n,
-          group = 1,
-          data_id = create_time_minute,
-          tooltip = glue("{create_time_minute} ({n})")
-        )
-      ) +
-      geom_line(
-        linewidth = 0.5,
-        show.legend = FALSE,
-        colour = "#00ff00"
-      ) +
-      geom_point(
-        size = 2,
-        show.legend = FALSE,
-        colour = "#fff"
-      ) +
-      geom_point_interactive(
-        size = 1.6,
-        show.legend = FALSE,
-        colour = "#00ff00"
-      ) +
-      geom_area(
-        fill = "#00ff00",
-        alpha = 0.04
-      ) +
-      scale_x_continuous(
-        breaks = seq(0, 59, by = 10),
-        minor_breaks = seq(1, 59, by = 1),
-        expand = c(0.1, 0, 0.1, 0)
-      ) +
-      scale_y_continuous(
-        expand = c(0, 0),
-        limits = limits_y,
-        minor_breaks = NULL,
-        position = "right",
-        labels = label_comma()
-      ) +
-      guides(
-        x = guide_axis(minor.ticks = TRUE),
-        y = guide_axis(minor.ticks = FALSE)
-      ) +
-      labs(
-        title = NULL,
-        subtitle = NULL,
-        caption = NULL,
-        x = NULL,
-        y = NULL,
-        colour = NULL
-      ) +
-      theme(
-        panel.grid = element_blank(),
-        axis.text.y.right = element_blank(),
-        axis.minor.ticks.length.x.bottom = unit(0.08, "in"),
-        axis.ticks.y = element_blank()
-      )
+  #   ## Create the conversations by minute plot
+  #   conversations_minute_plot <-
+  #     conversations_minute_plot_data |>
+  #     ggplot(
+  #       aes(
+  #         x = create_time_minute,
+  #         y = n,
+  #         group = 1,
+  #         data_id = create_time_minute,
+  #         tooltip = glue("{create_time_minute} ({n})")
+  #       )
+  #     ) +
+  #     geom_line(
+  #       linewidth = 0.5,
+  #       show.legend = FALSE,
+  #       colour = "#00ff00"
+  #     ) +
+  #     geom_point(
+  #       size = 2,
+  #       show.legend = FALSE,
+  #       colour = "#fff"
+  #     ) +
+  #     geom_point_interactive(
+  #       size = 1.6,
+  #       show.legend = FALSE,
+  #       colour = "#00ff00"
+  #     ) +
+  #     geom_area(
+  #       fill = "#00ff00",
+  #       alpha = 0.04
+  #     ) +
+  #     scale_x_continuous(
+  #       breaks = seq(0, 59, by = 10),
+  #       minor_breaks = seq(1, 59, by = 1),
+  #       expand = c(0.1, 0, 0.1, 0)
+  #     ) +
+  #     scale_y_continuous(
+  #       expand = c(0, 0),
+  #       limits = limits_y,
+  #       minor_breaks = NULL,
+  #       position = "right",
+  #       labels = label_comma()
+  #     ) +
+  #     guides(
+  #       x = guide_axis(minor.ticks = TRUE),
+  #       y = guide_axis(minor.ticks = FALSE)
+  #     ) +
+  #     labs(
+  #       title = NULL,
+  #       subtitle = NULL,
+  #       caption = NULL,
+  #       x = NULL,
+  #       y = NULL,
+  #       colour = NULL
+  #     ) +
+  #     theme(
+  #       panel.grid = element_blank(),
+  #       axis.text.y.right = element_blank(),
+  #       axis.minor.ticks.length.x.bottom = unit(0.08, "in"),
+  #       axis.line.y = element_blank(),
+  #       axis.text.y.right = element_blank()
+  #     )
 
-    ## Ouput the girafe() plot that will be passed the render function
-    girafe(
-      ggobj = conversations_minute_plot,
-      width_svg = 9,
-      height_svg = 6,
-      options = list(
-        opts_toolbar(
-          saveaspng = TRUE,
-          pngname = "conversations_by_minute",
-          hidden = c(
-            "lasso_select",
-            "lasso_deselect",
-            "zoom_onoff",
-            "zoom_rect",
-            "zoom_reset"
-          )
-        ),
-        opts_hover(css = "stroke-width: 2pt;"),
-        opts_hover_inv(css = NULL),
-        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
-      )
-    )
-  })
+  #   ## Ouput the girafe() plot that will be passed the render function
+  #   girafe(
+  #     ggobj = conversations_minute_plot,
+  #     width_svg = 9,
+  #     height_svg = 6,
+  #     options = list(
+  #       opts_toolbar(
+  #         saveaspng = TRUE,
+  #         pngname = "conversations_by_minute",
+  #         hidden = c(
+  #           "lasso_select",
+  #           "lasso_deselect",
+  #           "zoom_onoff",
+  #           "zoom_rect",
+  #           "zoom_reset"
+  #         )
+  #       ),
+  #       opts_hover(css = "stroke-width: 2pt;"),
+  #       opts_hover_inv(css = NULL),
+  #       opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
+  #     )
+  #   )
+  # })
 
-  # First Row Plots - Weekday Bar Chart ----------------------------------
+  # Second Row Plots - Weekday Bar Chart ---------------------------------
 
   output$wdayPlot <- renderGirafe({
     
@@ -778,9 +785,11 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
-        axis.ticks.y = element_blank(),
+        panel.grid = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.y.right = element_blank(),
         axis.text.y.right = element_blank(),
-        panel.grid = element_blank()
+        axis.minor.ticks.y.right = element_blank()
       )
 
     ## Ouput the girafe() plot that will be passed the render function
@@ -810,57 +819,52 @@ function(input, output, session) {
   # First Row Plots - Token ECDF -----------------------------------------
 
   output$distPlot <- renderGirafe({
+    
     ## Check `conversations` exists
     req(conversations())
-
-    ## Create the dataset required for making token distribution plot
-    token_distribution_plot_data <-
-      conversations() |>
-      group_by(chat_id, author_id, author) |>
-      reframe(
-        avg_tokens_per_conversation_by_author = mean(tokens, na.rm = TRUE)
-      ) |>
-      mutate(
-        author = if_else(author_id == 1L, "You", "ChatGPT"),
-        author = factor(author, levels = c("You", "ChatGPT"))
-      ) |>
-      select(
-        "chat_id",
-        "author_id",
-        "author",
-        "avg_tokens_per_conversation_by_author"
-      )
+    
+    ## Compute the token ECDF per author
+    token_distribution_plot_data <- 
+      conversations() |> 
+      group_by(author) |> 
+      arrange(tokens) |> 
+      mutate(ecdf = ecdf(tokens)(tokens)) |> 
+      ungroup() |> 
+      mutate(author = if_else(str_to_lower(author) == "user", "You", "ChatGPT")) |> 
+      select("author", "tokens", "ecdf")
 
     ## Set the plot y-axis limits
-    max_x <- max(token_distribution_plot_data$avg_tokens_per_conversation_by_author)
-    limits_x <- c(0, max_x)
+    max_x <- max(token_distribution_plot_data$tokens, na.rm = TRUE)
+    limits_x <- c(0, max_x * 1.1)
 
     ## Cumulative distribution comparison
     token_distribution_plot <-
       token_distribution_plot_data |>
       ggplot(
-        aes(x = avg_tokens_per_conversation_by_author, colour = author, data_id = author)
+        aes(x = tokens, y = ecdf, colour = author, group = author, data_id = author, tooltip = author)
       ) +
       geom_step_interactive(
-        aes(y = after_stat(y), group = author),
-        stat = "ecdf",
         linewidth = 1.5
       ) +
       scale_x_continuous(
-        labels = label_comma(big.mark = ",", suffix = " tkns"),
+        labels = label_number(big.mark = ",", suffix = " tkns"),
         limits = limits_x,
-        breaks = seq(limits_x[1], limits_x[2], by = 500),
-        expand = c(0, 0, 0, 0)
+        expand = c(0, 0)
       ) +
       scale_y_continuous(
         position = "right",
-        labels = label_percent(),
         breaks = seq(0.25, 1, by = 0.25),
+        minor_breaks = seq(0.125, 0.875, by = 0.125),
+        labels = label_percent(),
         limits = c(0, 1),
         expand = c(0, 0)
       ) +
       scale_colour_manual(
-        values = c("You" = "#ff80fbab", "ChatGPT" = "#ffffffab")
+        values = c("You" = "#BB86FC", "ChatGPT" = "#FFEB3B")
+      ) +
+      guides(
+        x = guide_axis(minor.ticks = TRUE),
+        y = guide_axis(minor.ticks = TRUE)
       ) +
       labs(
         title = NULL,
@@ -871,7 +875,8 @@ function(input, output, session) {
       ) +
       theme(
         axis.ticks.y = element_blank(),
-        panel.grid = element_blank(),
+        panel.grid = element_line(colour = "#999", linewidth = 0.5),
+        panel.grid.minor = element_blank(),
         plot.margin = unit(c(5, 35, 5, 55), "pt")
       )
 
@@ -892,14 +897,14 @@ function(input, output, session) {
             "zoom_reset"
           )
         ),
-        opts_hover(css = "stroke-width: 5pt;"),
+        opts_hover(css = "stroke-width: 1pt;"),
         opts_hover_inv(css = NULL),
-        opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500, css = "background-color: black; color: white; font-family: sans-serif; font-size: 15pt; padding-left: 8pt; padding-right: 8pt; padding-top: 5pt; padding-bottom: 5pt")
+        opts_tooltip(opacity = 0.80, delay_mouseover = 500, delay_mouseout = 500, css = NULL)
       )
     )
   })
 
-  # Second Row Plot - Word Bar Chart ----------------------------------
+  # First Row Plot - Word Bar Chart --------------------------------------
 
   output$wordPlot <- renderGirafe({
 
@@ -940,12 +945,12 @@ function(input, output, session) {
       geom_point(
         size = 5,
         show.legend = FALSE,
-        colour = "#fff"
+        colour = "#00ff00"
       ) +
       geom_point_interactive(
         size = 4,
         show.legend = FALSE,
-        colour = "#00ff00"
+        colour = "#0a0a0a"
       ) +
       geom_text(
         aes(label = label_comma()(n)),
@@ -974,6 +979,7 @@ function(input, output, session) {
         colour = NULL
       ) +
       theme(
+        axis.text.x = element_markdown(vjust = 1, hjust = 1, angle = 45, margin = margin(t =  8, r = 0, b = 0, l = 0)),
         axis.ticks.y = element_blank(),
         axis.text.y.right = element_blank(),
         panel.grid.major = element_blank(),
@@ -997,72 +1003,12 @@ function(input, output, session) {
             "zoom_reset"
           )
         ),
-        opts_hover(css = "stroke-width: 3pt;"),
+        opts_hover(css = "stroke: #00ff00; stroke-width: 1pt;"),
         opts_hover_inv(css = NULL),
         opts_tooltip(opacity = 0.80, offx = -80, offy = 25, delay_mouseover = 500, delay_mouseout = 500)
       )
     )
   })
-
-  # ## Word cloud plot ---------------------------------------------------
-  
-  # output$wordPlot <- renderImage({
-
-  #   ## ...
-  #   req(conversations())
-
-  #   # Get the data for the word cloud
-  #   word_cloud_plot_data <-
-  #     conversations() |>
-  #     select("title") |>
-  #     unnest_tokens(input = title, output = word) |>
-  #     anti_join(get_stopwords(), by = join_by("word")) |>
-  #     count(word) |>
-  #     slice_max(n = 25, with_ties = FALSE, order_by = n) |>
-  #     select("word", "n")
-    
-  #   # Create a temporary file to save the plot to
-  #   outfile <- tempfile(fileext = ".svg")
-
-
-  #   # Define the colours for words
-  #   standout_colour <- "black"
-  #   other_colours <- paste0("grey", as.integer(seq(76, 99, length.out = 24)))
-  #   word_colours <- c(standout_colour, other_colours)
-
-  #   # Create the word cloud plot
-  #   word_cloud_plot <-
-  #     word_cloud_plot_data |>
-  #     ggplot(
-  #       aes(label = word, size = n, colour = fct_inorder(word))
-  #     ) +
-  #     geom_text_wordcloud_area(
-  #       seed = 42,
-  #       rstep = 0.05,
-  #       use_richtext = TRUE,
-  #       rm_outside = TRUE
-  #     ) +
-  #     scale_size_area(max_size = 50) +
-  #     scale_colour_manual(values = word_colours) +
-  #     theme_void()
-
-  #   # Save the plot to the temporary file
-  #   ggsave(
-  #     outfile,
-  #     plot = word_cloud_plot,
-  #     width = 12,
-  #     height = 4, 
-  #     units = "in",
-  #     device = "svg"
-  #   )
-
-  #   # Return a list containing the file path and content type
-  #   list(
-  #     src = outfile,
-  #     contentType = "image/svg+xml",
-  #     alt = "Word cloud of conversation topics"
-  #   )
-  # }, deleteFile = TRUE)
 
   # Nav Panel - Raw Data -------------------------------------------------
 

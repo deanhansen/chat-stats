@@ -33,6 +33,8 @@ suppressMessages(
       library(showtext)
       library(ggtext)
       library(ggprism)
+      library(ggdist)
+      library(ggbeeswarm)
 
       ## Text cleanup
       library(tidytext)
@@ -65,8 +67,8 @@ suppressMessages(
           ## Ticks
           axis.ticks.x = element_line(colour = "#00ff00", linewidth = 0.5),
           axis.ticks.length.x = unit(0.16, "in"),
-          axis.ticks.y = element_line(colour = "#00ff00", linewidth = 0.5),
-          axis.ticks.length.y = unit(0.16, "in"),
+          axis.ticks.y.right = element_line(colour = "#00ff00", linewidth = 0.5),
+          axis.ticks.length.y.right = unit(0.16, "in"),
 
           ## Panel settings
           panel.grid = element_line(colour = "#00ff00", linewidth = 0.5),

@@ -1,3 +1,5 @@
+source("global.R")
+
 # Theme ------------------------------------------------------------------
 
 my_theme <- bs_theme(
@@ -17,7 +19,7 @@ my_theme <- bs_theme(
 file_input <- fileInput(
   inputId = "conversation_history",
   label = NULL,
-  placeholder = "Upload your conversation_history.json file", 
+  placeholder = "Upload your conversation_history.json file from OpenAI", 
   accept = ".json",
   multiple = FALSE,
   width = "100%"
@@ -56,7 +58,7 @@ second_row_boxes <- list(
   value_box(
     title = "When You First Met",
     value = textOutput("first_conversation_date"),
-    showcase = bs_icon("heart", size = "3rem", class = "matrix-icon"),
+    showcase = bs_icon("calendar-week", size = "3rem", class = "matrix-icon"),
     showcase_layout = "left center",
     theme = "secondary",
     class = "matrix-box"
@@ -101,17 +103,6 @@ first_row_plots <- list(
     ),
     girafeOutput("wordPlot")
   ),
-  # card(
-  #   class = "matrix-box",
-  #   card_header(
-  #     "You Say Goodbye, And I Say Hello",
-  #     tooltip(
-  #       bs_icon("info-circle", class = "matrix-icon"),
-  #       "The number of separate conversations started by day of the week."
-  #     )
-  #   ),
-  #   girafeOutput("wdayPlot", width = "100%")
-  # ),
   card(
     class = "matrix-box",
     card_header(
@@ -127,19 +118,30 @@ first_row_plots <- list(
 
 # Second Row Plots -------------------------------------------------------
 
-# second_row_plots <- list(
-#   card(
-#     class = "matrix-box",
-#     card_header(
-#       "Now Tell Me, What's On Your Mind",
-#       tooltip(
-#         bs_icon("info-circle", class = "matrix-icon"),
-#         "What topics you're asking ChatGPT about!"
-#       )
-#     ),
-#     girafeOutput("wordPlot", width = "100%")
-#   )
-# )
+second_row_plots <- list(
+  card(
+    class = "matrix-box",
+    card_header(
+      "You Say Goodbye, And I Say Hello",
+      tooltip(
+        bs_icon("info-circle", class = "matrix-icon"),
+        "Total messages sent to ChatGPT by day of the week."
+      )
+    ),
+    girafeOutput("wdayPlot")
+  ),
+  card(
+    class = "matrix-box",
+    card_header(
+      "Good Morning, Good Morning",
+      tooltip(
+        bs_icon("info-circle", class = "matrix-icon"),
+        "Total messages sent to ChatGPT by hour of the day."
+      )
+    ),
+    girafeOutput("hourPlot")
+  )
+)
 
 # Shiny UI ---------------------------------------------------------------
 
@@ -173,27 +175,10 @@ page_navbar(
       ),
     conditionalPanel(
       condition = "input.selected_tab === 'Dashboard' && output.dataReady == true",
-      div(id = "first_row_boxes_wrapper",   style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_boxes)),
-      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3), gap = "12px", !!!second_row_boxes)),
-      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(6, 6),       gap = "12px", !!!first_row_plots)),
-      div(id = "second_row_plots_wrapper", style = "display: none;",
-        layout_columns(class = "matrix-box-plot",
-          col_widths = c(-3, 6, -3),
-          gap = "12px",
-          navset_card_underline(
-            title = tagList(
-              "You Say Goodbye, And I Say Hello",
-              tooltip(
-                bs_icon("info-circle", class = "matrix-icon"),
-                "Total messages sent to ChatGPT by weekday, hour of the day and minute."
-              )
-            ),
-            nav_panel("Weekday", girafeOutput("wdayPlot")),
-            nav_panel("Hour", girafeOutput("hourPlot")),
-            nav_panel("Minute", girafeOutput("minutePlot"))
-          )
-        )
-      )
+      div(id = "first_row_boxes_wrapper",   style = "display: none;", layout_columns(col_widths = c(6, 6),            gap = "12px", !!!first_row_boxes)),
+      div(id = "second_row_boxes_wrapper", style = "display: none;", layout_columns(col_widths = c(3, 3, 3, 3),       gap = "12px", !!!second_row_boxes)),
+      div(id = "first_row_plots_wrapper",  style = "display: none;", layout_columns(col_widths = c(-1, 4, -2, 4, -1), gap = "12px", !!!first_row_plots)),
+      div(id = "second_row_plots_wrapper", style = "display: none;", layout_columns(col_widths = c(-1, 4, -2, 4, -1), gap = "12px", !!!second_row_plots))
     )
   ),
 
