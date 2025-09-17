@@ -13,7 +13,7 @@
 
 ## How to Use
 - Download your conversation history from OpenAI [here](https://help.openai.com/en/articles/7260999-how-do-i-export-my-chatgpt-history-and-data).
-- Once downloaded, unzip the folder, find the conversation history `.json` file and upload it to the dashboard.
+- Once downloaded, unzip the folder, find the conversation history `conversations.json` file and upload it to the dashboard.
 
 ## Technical Details
 - Built with `shiny`, and `bslib`.
