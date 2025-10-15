@@ -1,6 +1,6 @@
 # Allow up to 50MB files -------------------------------------------------
 
-options(shiny.maxRequestSize = 50 * 1024^2)
+options(shiny.maxRequestSize = 200 * 1024^2)
 
 # Packages ---------------------------------------------------------------
 
